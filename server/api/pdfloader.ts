@@ -1,21 +1,22 @@
-import { PDFPageProxy, getDocument, PDFDocumentProxy } from "pdfjs-dist";
+import { getDocument, PDFDocumentProxy } from "pdfjs-dist";
 
-async function loadPdf(url: string) {
+export default defineEventHandler(async (event) => {
+    const { source } = await readBody<{ source: string | File }>(event)
+    const payload = await formatSource(source)
+
+    const pdfDocument = await loadPdf(payload)
+
+    const data = await extractPdfContent(pdfDocument)
+
+    return {
+        data
+    }
+})
+
+async function loadPdf(url: string | ArrayBuffer) {
     const loadingTask = getDocument(url);
     return loadingTask.promise.then((pdfDocument) => pdfDocument);
 }
-
-export default defineEventHandler(async (event) => {
-    const query = getQuery<{ url: string }>(event)
-
-    const pdfDocument = await loadPdf(query.url)
-
-    const text = await extractPdfContent(pdfDocument)
-
-    return {
-        text
-    }
-})
 
 function getPageContent(pdfDocument: PDFDocumentProxy, page: number) {
     return new Promise((resolve) => {
@@ -38,4 +39,34 @@ async function extractPdfContent(pdfDocument: PDFDocumentProxy) {
     })
     const pdfContent = await Promise.all(pool)
     return pdfContent.join('')
+}
+
+async function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            if (reader.result instanceof ArrayBuffer) {
+                resolve(reader.result);
+            } else {
+                reject(new Error("Failed to read file as ArrayBuffer"));
+            }
+        };
+
+        reader.onerror = () => {
+            reject(new Error("Error reading file"));
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+function formatSource(source: string | File): Promise<string | ArrayBuffer> {
+    return new Promise((resolve) => {
+        if (source instanceof File) {
+            fileToArrayBuffer(source).then(response => resolve(response))
+        } else {
+            resolve(source)
+        }
+    })
 }

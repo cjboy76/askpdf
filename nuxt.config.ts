@@ -10,5 +10,19 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     openaiApiKey: ''
+  },
+  modules: [
+    '@vueuse/nuxt',
+    '@nuxtjs/tailwindcss'
+  ],
+  hooks: {
+    'components:dirs': (dirs) => {
+      dirs.unshift({
+        path: '~/components/ui',
+        extensions: ['.vue'],
+        prefix: 'Ui',
+        pathPrefix: false
+      })
+    }
   }
 });

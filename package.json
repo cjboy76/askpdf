@@ -10,8 +10,10 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
+    "@iconify-json/streamline": "^1.1.6",
     "@nuxt/devtools": "latest",
     "@unocss/nuxt": "^0.57.7",
+    "@unocss/preset-icons": "^0.57.7",
     "@vueuse/core": "^10.6.1",
     "@vueuse/nuxt": "^10.6.1",
     "nuxt": "^3.8.1",

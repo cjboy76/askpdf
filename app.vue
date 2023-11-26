@@ -4,5 +4,5 @@
   </NuxtLayout>
 </template>
 <style>
-@import "./assets/css/tailwind.css";
+@import "@unocss/reset/tailwind.css";
 </style>

@@ -16,6 +16,8 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
+    "ai": "^2.2.25",
+    "openai": "^4.20.0",
     "pdfjs-dist": "^4.0.189"
   }
 }

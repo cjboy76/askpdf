@@ -3,9 +3,8 @@
 </template>
 
 <script setup lang="ts">
-const { data } = await useFetch(
-  "/api/pdfloader?url=https://www.africau.edu/images/default/sample.pdf"
-);
+const source = "https://www.scholastic.com/hpread/HP_Book1_Chapter_Excerpt.pdf";
+const { data } = await useFetch(`/api/pdfloader?url=${source}`);
 
 console.log(data.value);
 </script>

@@ -10,12 +10,12 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@iconify-json/streamline": "^1.1.6",
     "@nuxt/devtools": "latest",
     "@unocss/nuxt": "^0.57.7",
-    "@unocss/preset-icons": "^0.57.7",
+    "@vicons/ionicons5": "^0.12.0",
     "@vueuse/core": "^10.6.1",
     "@vueuse/nuxt": "^10.6.1",
+    "naive-ui": "^2.35.0",
     "nuxt": "^3.8.1",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"

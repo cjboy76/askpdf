@@ -1,5 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import { presetIcons, presetUno } from 'unocss'
+import { presetUno } from 'unocss'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
@@ -24,8 +24,7 @@ export default defineNuxtConfig({
   ],
   unocss: {
     presets: [
-      presetUno(),
-      presetIcons()
+      presetUno()
     ]
   },
 });

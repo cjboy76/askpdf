@@ -1,10 +1,18 @@
 import { getDocument, PDFDocumentProxy } from "pdfjs-dist";
 
 export default defineEventHandler(async (event) => {
-    const { source } = await readBody<{ source: string | File }>(event)
-    const payload = await formatSource(source)
+    const body = await readFormData(event)
+    const file = body.get('file') as File
+    if (!file || !file.type || !file.size) {
+        throw createError({
+            statusCode: 400,
+            statusMessage: 'Invalid file',
+        })
+    }
 
-    const pdfDocument = await loadPdf(payload)
+    const unitArray = await fileToUint8Array(file)
+
+    const pdfDocument = await loadPdf(unitArray)
 
     const data = await extractPdfContent(pdfDocument)
 
@@ -41,32 +49,9 @@ async function extractPdfContent(pdfDocument: PDFDocumentProxy) {
     return pdfContent.join('')
 }
 
-async function fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
+async function fileToUint8Array(file: File) {
+    const buffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(buffer);
 
-        reader.onload = () => {
-            if (reader.result instanceof ArrayBuffer) {
-                resolve(reader.result);
-            } else {
-                reject(new Error("Failed to read file as ArrayBuffer"));
-            }
-        };
-
-        reader.onerror = () => {
-            reject(new Error("Error reading file"));
-        };
-
-        reader.readAsArrayBuffer(file);
-    });
-}
-
-function formatSource(source: string | File): Promise<string | ArrayBuffer> {
-    return new Promise((resolve) => {
-        if (source instanceof File) {
-            fileToArrayBuffer(source).then(response => resolve(response))
-        } else {
-            resolve(source)
-        }
-    })
+    return uint8Array;
 }

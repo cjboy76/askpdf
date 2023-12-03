@@ -26,7 +26,7 @@ async function loadPdf(url: string | ArrayBuffer) {
     return loadingTask.promise.then((pdfDocument) => pdfDocument);
 }
 
-function getPageContent(pdfDocument: PDFDocumentProxy, page: number) {
+function getPageContent(pdfDocument: PDFDocumentProxy, page: number): Promise<PageContent> {
     return new Promise((resolve) => {
         pdfDocument.getPage(page)
             .then(pageDocument => pageDocument.getTextContent())
@@ -36,7 +36,7 @@ function getPageContent(pdfDocument: PDFDocumentProxy, page: number) {
                 for (const item of items) {
                     if ('str' in item) textContent += item.str
                 }
-                resolve(textContent)
+                resolve({ textContent, page })
             })
     })
 }
@@ -45,8 +45,7 @@ async function extractPdfContent(pdfDocument: PDFDocumentProxy) {
     const pool = Array.from({ length: pdfDocument.numPages }, (_, index) => {
         return getPageContent(pdfDocument, index + 1)
     })
-    const pdfContent = await Promise.all(pool)
-    return pdfContent.join('')
+    return await Promise.all(pool)
 }
 
 async function fileToUint8Array(file: File) {

@@ -21,8 +21,10 @@
     "vue-router": "^4.2.5"
   },
   "dependencies": {
+    "@pinia/nuxt": "^0.5.1",
     "ai": "^2.2.25",
     "openai": "^4.20.0",
-    "pdfjs-dist": "^4.0.189"
+    "pdfjs-dist": "^4.0.189",
+    "pinia": "^2.1.7"
   }
 }

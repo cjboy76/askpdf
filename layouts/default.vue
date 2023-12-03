@@ -1,3 +1,48 @@
+<script setup lang="ts">
+import {
+  NButton,
+  NIcon,
+  NModal,
+  NCard,
+  NUpload,
+  NUploadDragger,
+  NText,
+  NP,
+  type UploadFileInfo,
+  type UploadProps,
+} from "naive-ui";
+import {
+  SettingsOutline,
+  AddOutline,
+  CloudUploadOutline,
+} from "@vicons/ionicons5";
+import { useDoc } from "~/store";
+
+const uploadFile = ref<UploadFileInfo[]>([]);
+const showModal = ref(false);
+const { setDocument } = useDoc();
+
+const onChange: UploadProps["onChange"] = ({ file }) => {
+  uploadFile.value.push(file);
+};
+
+async function uploadPdfHandler() {
+  const file = toRaw(uploadFile.value[0]);
+  if (!file.file) return;
+  uploadFile.value = [];
+
+  const formData = new FormData();
+  formData.append("file", file.file);
+
+  const { data } = await $fetch("/api/pdfloader", {
+    method: "post",
+    body: formData,
+  });
+
+  setDocument(data);
+}
+</script>
+
 <template>
   <div class="h-screen grid grid-cols-6">
     <div class="col-span-1 bg-gray-100 h-full flex flex-col">
@@ -74,44 +119,3 @@
     </n-card>
   </n-modal>
 </template>
-
-<script setup lang="ts">
-import {
-  NButton,
-  NIcon,
-  NModal,
-  NCard,
-  NUpload,
-  NUploadDragger,
-  NText,
-  NP,
-  type UploadFileInfo,
-  type UploadProps,
-} from "naive-ui";
-import {
-  SettingsOutline,
-  AddOutline,
-  CloudUploadOutline,
-} from "@vicons/ionicons5";
-
-const uploadFile = ref<UploadFileInfo[]>([]);
-const showModal = ref(false);
-
-const onChange: UploadProps["onChange"] = ({ file }) => {
-  uploadFile.value.push(file);
-};
-
-async function uploadPdfHandler() {
-  const file = toRaw(uploadFile.value[0]);
-  if (!file.file) return;
-  uploadFile.value = [];
-
-  const formData = new FormData();
-  formData.append("file", file.file);
-
-  return await $fetch("/api/pdfloader", {
-    method: "post",
-    body: formData,
-  });
-}
-</script>

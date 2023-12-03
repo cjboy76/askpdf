@@ -17,14 +17,34 @@
 
 <script setup lang="ts">
 import { NInput } from "naive-ui";
+import { useDoc } from "~/store";
 
-// const source = "https://www.scholastic.com/hpread/HP_Book1_Chapter_Excerpt.pdf";
-// async function createPdfFile(source: string | File) {
-//   const users = await $fetch("/api/pdfloader", {
-//     method: "POST",
-//     body: { source },
+const { compiled } = useDoc();
+
+async function trigger() {
+  const messages = ["hello world"];
+
+  const result = await $fetch("/api/chat", {
+    method: "post",
+    body: messages,
+  });
+
+  console.log(result);
+}
+
+trigger();
+
+// watchEffect(async () => {
+//   if (compiled) return;
+
+//   const result = await $fetch("/api/pdfloader", {
+//     method: "post",
+//     body: messages,
 //   });
-// }
+
+//   console.log(result);
+//   // send to openai
+// });
 </script>
 
 <style>

@@ -21,6 +21,7 @@ export default defineNuxtConfig({
   modules: [
     '@vueuse/nuxt',
     '@unocss/nuxt',
+    '@pinia/nuxt',
   ],
   unocss: {
     presets: [

@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from 'openai/resources/chat';
-import { OpenAIStream, StreamingTextResponse } from 'ai';
 
 export default defineLazyEventHandler(() => {
     const apiKey = useRuntimeConfig().openaiApiKey;

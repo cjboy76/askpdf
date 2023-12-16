@@ -17,29 +17,37 @@ import {
   CloudUploadOutline,
 } from "@vicons/ionicons5";
 import { useDoc } from "~/store";
+import { useMessage } from "naive-ui";
 
 const uploadFile = ref<UploadFileInfo[]>([]);
 const showModal = ref(false);
 const { setDocument } = useDoc();
+const message = useMessage();
 
 const onChange: UploadProps["onChange"] = ({ file }) => {
   uploadFile.value.push(file);
 };
 
-async function uploadPdfHandler() {
-  const file = toRaw(uploadFile.value[0]);
-  if (!file.file) return;
+function uploadPdfCanceller() {
   uploadFile.value = [];
-
-  const formData = new FormData();
-  formData.append("file", file.file);
-
-  const pdfInfo = await $fetch("/api/pdfloader", {
-    method: "post",
-    body: formData,
-  });
-  setDocument(pdfInfo);
   showModal.value = false;
+}
+
+async function uploadPdfHandler() {
+  try {
+    const file = toRaw(uploadFile.value[0]);
+    const formData = new FormData();
+    formData.append("file", file.file!);
+    const pdfInfo = await $fetch("/api/pdfloader", {
+      method: "post",
+      body: formData,
+    });
+    setDocument(pdfInfo);
+  } catch (error) {
+    message.error(error as string);
+  } finally {
+    uploadPdfCanceller();
+  }
 }
 </script>
 
@@ -113,7 +121,12 @@ async function uploadPdfHandler() {
       </n-upload>
       <template #footer>
         <div class="flex justify-end">
-          <n-button @click="uploadPdfHandler">確認</n-button>
+          <n-button class="mr-4" @click="uploadPdfCanceller">取消</n-button>
+          <n-button
+            :disabled="uploadFile.length === 0"
+            @click="uploadPdfHandler"
+            >確認</n-button
+          >
         </div>
       </template>
     </n-card>

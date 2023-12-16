@@ -3,11 +3,13 @@ import { ref, computed } from 'vue'
 
 export const useDoc = defineStore('document', () => {
     const document = ref<PageContent[]>([])
+    const rawTextContent = ref('')
     const summarize = ref('')
     const _compiled = ref(false)
 
-    const setDocument = (value: PageContent[]) => {
-        document.value = value
+    const setDocument = ({ data, raw }: { data: PageContent[], raw: string }) => {
+        document.value = data
+        rawTextContent.value = raw
         _compiled.value = false
     }
 
@@ -17,5 +19,5 @@ export const useDoc = defineStore('document', () => {
 
     const compiled = computed(() => _compiled.value)
 
-    return { document, setDocument, summarize, setSummarize, compiled }
+    return { document, setDocument, summarize, setSummarize, compiled, rawTextContent }
 })

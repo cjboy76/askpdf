@@ -34,12 +34,12 @@ async function uploadPdfHandler() {
   const formData = new FormData();
   formData.append("file", file.file);
 
-  const { data } = await $fetch("/api/pdfloader", {
+  const pdfInfo = await $fetch("/api/pdfloader", {
     method: "post",
     body: formData,
   });
-
-  setDocument(data);
+  setDocument(pdfInfo);
+  showModal.value = false;
 }
 </script>
 

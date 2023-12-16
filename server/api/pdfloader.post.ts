@@ -9,15 +9,14 @@ export default defineEventHandler(async (event) => {
             statusMessage: 'Invalid file',
         })
     }
-
     const unitArray = await fileToUint8Array(file)
-
     const pdfDocument = await loadPdf(unitArray)
-
     const data = await extractPdfContent(pdfDocument)
+    const raw = data.reduce((prev, curr) => prev + curr.textContent, '')
 
     return {
-        data
+        data,
+        raw
     }
 })
 
@@ -41,11 +40,11 @@ function getPageContent(pdfDocument: PDFDocumentProxy, page: number): Promise<Pa
     })
 }
 
-async function extractPdfContent(pdfDocument: PDFDocumentProxy) {
+function extractPdfContent(pdfDocument: PDFDocumentProxy) {
     const pool = Array.from({ length: pdfDocument.numPages }, (_, index) => {
         return getPageContent(pdfDocument, index + 1)
     })
-    return await Promise.all(pool)
+    return Promise.all(pool)
 }
 
 async function fileToUint8Array(file: File) {

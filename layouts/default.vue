@@ -15,9 +15,15 @@ import {
   SettingsOutline,
   AddOutline,
   CloudUploadOutline,
+  MoonOutline,
+  SunnyOutline,
 } from "@vicons/ionicons5";
 import { useDoc } from "~/store";
 import { useMessage } from "naive-ui";
+import { useDark, useToggle } from "@vueuse/core";
+
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
 
 const uploadFile = ref<UploadFileInfo[]>([]);
 const showModal = ref(false);
@@ -52,10 +58,15 @@ async function uploadPdfHandler() {
 </script>
 
 <template>
-  <div class="h-screen grid grid-cols-6">
-    <div class="col-span-1 bg-gray-100 h-full flex flex-col">
+  <div class="h-screen grid grid-cols-6 dark:bg-stone-900 dark:text-white">
+    <div
+      class="col-span-1 bg-gray-100 h-full flex flex-col dark:bg-stone-800 dark:text-white"
+    >
       <div class="flex-1 p-2">
-        <n-button class="w-full" @click="showModal = true">
+        <n-button
+          class="w-full mt-2 dark:text-[#e5e7eb]"
+          @click="showModal = true"
+        >
           新增文件
           <template #icon>
             <n-icon>
@@ -80,9 +91,20 @@ async function uploadPdfHandler() {
           <div class="flex justify-between items-center">
             <div>ChatPDF</div>
             <div class="flex">
-              <NButton quaternary>外觀</NButton>
-              <NButton quaternary>歷史</NButton>
-              <NButton quaternary>登入</NButton>
+              <NButton
+                @click="() => toggleDark()"
+                quaternary
+                class="dark:text-[#e5e7eb]"
+              >
+                <template #icon>
+                  <n-icon>
+                    <MoonOutline v-show="isDark" />
+                    <SunnyOutline v-show="!isDark" />
+                  </n-icon>
+                </template>
+              </NButton>
+              <NButton quaternary class="dark:text-[#e5e7eb]">歷史</NButton>
+              <NButton quaternary class="dark:text-[#e5e7eb]">登入</NButton>
             </div>
           </div>
         </nav>

@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
 
     return {
         data,
-        raw
+        raw,
+        name: file.name
     }
 })
 

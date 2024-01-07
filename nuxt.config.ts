@@ -9,9 +9,6 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
-    plugins: [
-      '@/server/index'
-    ],
     esbuild: {
       options: {
         target: 'esnext',

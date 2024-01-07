@@ -9,12 +9,12 @@ import {
   NUploadDragger,
   NText,
   NP,
+  NSkeleton,
+  NAvatar,
   type UploadFileInfo,
   type UploadProps,
 } from "naive-ui";
 import {
-  SettingsOutline,
-  AddOutline,
   CloudUploadOutline,
   MoonOutline,
   SunnyOutline,
@@ -39,8 +39,10 @@ function uploadPdfCanceller() {
   uploadFile.value = [];
   showModal.value = false;
 }
+const loading = ref(false);
 
 async function uploadPdfHandler() {
+  loading.value = true;
   try {
     const file = toRaw(uploadFile.value[0]);
     const formData = new FormData();
@@ -58,82 +60,117 @@ async function uploadPdfHandler() {
     message.error(error as string);
   } finally {
     uploadPdfCanceller();
+    loading.value = false;
   }
 }
+
+const messages = <{ user: string; message: string; time: number }[]>[
+  { user: "system", message: "今天天氣真好", time: 2101101010101 },
+  {
+    user: "user",
+    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
+
+This property is read-only. Modifying this property is a no-op.`,
+    time: 24011313010101,
+  },
+  {
+    user: "system",
+    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
+
+This property is read-only. Modifying this property is a no-op.`,
+    time: 2401131301,
+  },
+  {
+    user: "user",
+    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
+
+This property is read-only. Modifying this property is a no-op.`,
+    time: 24011322220101,
+  },
+  {
+    user: "system",
+    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
+
+This property is read-only. Modifying this property is a no-op.`,
+    time: 24013333010101,
+  },
+  {
+    user: "user",
+    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
+
+This property is read-only. Modifying this property is a no-op.`,
+    time: 4444,
+  },
+];
 </script>
 
 <template>
-  <div class="h-screen grid grid-cols-6 dark:bg-stone-900 dark:text-white">
+  <div class="h-screen grid grid-cols-6 dark:bg-stone-800 dark:text-stone-100">
     <div
-      class="col-span-4 bg-gray-100 h-full flex flex-col dark:bg-stone-800 dark:text-white"
-    >
-      <div class="flex-1 p-2">
-        <n-button
-          class="w-full mt-2 dark:text-[#e5e7eb]"
-          @click="showModal = true"
+      class="col-span-3 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"
+    ></div>
+    <div class="col-span-3 flex flex-col h-full">
+      <div class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col">
+        <div
+          class="sticky top-0 py-4 px-4 z-10 bg-stone-800 flex justify-end items-center"
         >
-          新增文件
-          <template #icon>
-            <n-icon>
-              <AddOutline />
-            </n-icon>
-          </template>
-        </n-button>
+          <n-button
+            @click="() => toggleDark()"
+            quaternary
+            class="dark:text-[#e5e7eb]"
+          >
+            外觀
+          </n-button>
+          <n-button
+            quaternary
+            class="dark:text-[#e5e7eb]"
+            @click="showModal = true"
+          >
+            上傳文件
+          </n-button>
+          <n-avatar
+            class="mx-4 cursor-pointer"
+            round
+            size="medium"
+            src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+          />
+        </div>
+        <div v-if="messages.length === 0" class="text-center">
+          <h1 class="text-4xl font-bold text-center mb-4">AskPDF</h1>
+          <h2 class="text-xl font-bold text-center mb-4">
+            用 AI 和 PDF 聊天吧
+          </h2>
+        </div>
+        <div v-show="loading" class="w-4/5 mx-auto">
+          <n-skeleton text :repeat="2" />
+          <n-skeleton text style="width: 80%; margin: 0 auto" />
+        </div>
+        <div v-for="{ time, message, user } of messages" :key="time">
+          <div class="w-4/5 mx-auto grid grid-cols-8 py-6">
+            <div class="col-span-1 flex justify-center">
+              <n-avatar
+                class="h-10 w-10"
+                round
+                size="medium"
+                src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+              />
+            </div>
+            <div class="col-span-7">
+              <div class="h-10 w-10 mb-2 grid items-center font-bold">
+                {{ user === "system" ? "AskPDF" : user }}
+              </div>
+              <p>
+                {{ message }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="py-2 px-4">
-        <n-button quaternary circle>
-          <template #icon>
-            <n-icon>
-              <SettingsOutline />
-            </n-icon>
-          </template>
-        </n-button>
-      </div>
-    </div>
-    <div class="col-span-2">
-      <div class="container mx-auto flex flex-col h-full">
-        <nav class="py-4 px-4">
-          <div class="flex justify-between items-center">
-            <div>AskPDF</div>
-            <div class="flex">
-              <NButton
-                @click="() => toggleDark()"
-                quaternary
-                class="dark:text-[#e5e7eb]"
-              >
-                <template #icon>
-                  <n-icon>
-                    <MoonOutline v-show="isDark" />
-                    <SunnyOutline v-show="!isDark" />
-                  </n-icon>
-                </template>
-              </NButton>
-              <NButton quaternary class="dark:text-[#e5e7eb]">歷史</NButton>
-              <NButton quaternary class="dark:text-[#e5e7eb]">登入</NButton>
-            </div>
-          </div>
-        </nav>
-        <main class="flex-grow flex flex-col">
-          <div class="flex-1 flex justify-center mt-[20%]">
-            <div class="w-4/5 text-center">
-              <h1 class="text-4xl font-bold text-center mb-4">AskPDF</h1>
-              <h2 class="text-xl font-bold text-center mb-4">
-                用 AI 和 PDF 聊天吧
-              </h2>
-              <n-button class="mx-1"> 總結文章 </n-button>
-            </div>
-          </div>
-          <div class="px-4 pb-6">
-            <div class="w-4/5 mx-auto">
-              <n-input
-                class="w-4/5 mx-auto"
-                size="large"
-                placeholder="輸入訊息"
-              >
-              </n-input>
-            </div>
-          </div>
-        </main>
+      <div class="h-16 px-4 pb-6 pt-2">
+        <div class="w-5/6 mx-auto">
+          <n-input class="w-4/5 mx-auto" size="large" placeholder="輸入訊息">
+          </n-input>
+        </div>
       </div>
     </div>
   </div>
@@ -182,4 +219,7 @@ async function uploadPdfHandler() {
 
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap");
+html {
+  background-color: rgb(41 37 36);
+}
 </style>

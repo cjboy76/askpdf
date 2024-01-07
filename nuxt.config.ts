@@ -5,10 +5,13 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
-      title: "ChatPDF"
+      title: "AskPDF"
     }
   },
   nitro: {
+    plugins: [
+      '@/server/index'
+    ],
     esbuild: {
       options: {
         target: 'esnext',
@@ -16,12 +19,14 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    openaiApiKey: ''
+    openaiApiKey: '',
+    mongoUri: ''
   },
   modules: [
     '@vueuse/nuxt',
     '@unocss/nuxt',
     '@pinia/nuxt',
+    'nuxt-mongoose',
   ],
   unocss: {
     presets: [

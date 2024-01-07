@@ -24,6 +24,7 @@
     "@pinia/nuxt": "^0.5.1",
     "ai": "^2.2.25",
     "gpt-3-encoder": "^1.1.4",
+    "nuxt-mongoose": "^1.0.3",
     "openai": "^4.20.0",
     "pdfjs-dist": "^4.0.189",
     "pinia": "^2.1.7"

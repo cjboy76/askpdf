@@ -24,6 +24,7 @@ export default defineNuxtConfig({
     '@unocss/nuxt',
     '@pinia/nuxt',
     'nuxt-mongoose',
+    'nuxt-auth-utils'
   ],
   unocss: {
     presets: [

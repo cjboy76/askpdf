@@ -17,13 +17,13 @@
     "@vueuse/nuxt": "^10.6.1",
     "naive-ui": "^2.35.0",
     "nuxt": "^3.8.1",
+    "nuxt-auth-utils": "^0.0.14",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"
   },
   "dependencies": {
     "@pinia/nuxt": "^0.5.1",
     "ai": "^2.2.25",
-    "gpt-3-encoder": "^1.1.4",
     "nuxt-mongoose": "^1.0.3",
     "openai": "^4.20.0",
     "pdfjs-dist": "^4.0.189",

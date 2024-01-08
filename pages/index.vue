@@ -11,20 +11,18 @@ import {
   NP,
   NSkeleton,
   NAvatar,
+  NDropdown,
   type UploadFileInfo,
   type UploadProps,
 } from "naive-ui";
-import {
-  CloudUploadOutline,
-  MoonOutline,
-  SunnyOutline,
-} from "@vicons/ionicons5";
+import { CloudUploadOutline } from "@vicons/ionicons5";
 import { useDoc } from "~/store";
 import { useMessage } from "naive-ui";
 import { useDark, useToggle } from "@vueuse/core";
 
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
+const { loggedIn, user, clear } = useUserSession();
 
 const uploadFile = ref<UploadFileInfo[]>([]);
 const showModal = ref(false);
@@ -102,6 +100,23 @@ This property is read-only. Modifying this property is a no-op.`,
     time: 4444,
   },
 ];
+
+const userDropOptions = [
+  {
+    label: user.value.name,
+    key: "profile",
+  },
+  {
+    label: "Logout",
+    key: "logout",
+  },
+];
+
+const onUserSelect = (key: string) => {
+  if (key === "logout") {
+    clear();
+  }
+};
 </script>
 
 <template>
@@ -112,7 +127,7 @@ This property is read-only. Modifying this property is a no-op.`,
     <div class="col-span-3 flex flex-col h-full">
       <div class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col">
         <div
-          class="sticky top-0 py-4 px-4 z-10 bg-stone-800 flex justify-end items-center"
+          class="sticky top-0 py-4 px-4 z-10 bg-white dark:bg-stone-800 flex justify-end items-center"
         >
           <n-button
             @click="() => toggleDark()"
@@ -128,12 +143,24 @@ This property is read-only. Modifying this property is a no-op.`,
           >
             上傳文件
           </n-button>
-          <n-avatar
-            class="mx-4 cursor-pointer"
-            round
-            size="medium"
-            src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-          />
+          <a href="/api/auth/google" v-if="!loggedIn">
+            <n-button quaternary class="dark:text-[#e5e7eb]"> 登入 </n-button>
+          </a>
+          <client-only>
+            <n-dropdown
+              v-if="loggedIn"
+              trigger="click"
+              :options="userDropOptions"
+              @select="onUserSelect"
+            >
+              <n-avatar
+                class="mx-4 cursor-pointer"
+                round
+                size="medium"
+                :src="user.picture"
+              />
+            </n-dropdown>
+          </client-only>
         </div>
         <div v-if="messages.length === 0" class="text-center">
           <h1 class="text-4xl font-bold text-center mb-4">AskPDF</h1>
@@ -146,17 +173,16 @@ This property is read-only. Modifying this property is a no-op.`,
           <n-skeleton text style="width: 80%; margin: 0 auto" />
         </div>
         <div v-for="{ time, message, user } of messages" :key="time">
-          <div class="w-4/5 mx-auto grid grid-cols-8 py-6">
+          <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-center">
               <n-avatar
-                class="h-10 w-10"
+                class="w-8 h-8"
                 round
-                size="medium"
                 src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
               />
             </div>
             <div class="col-span-7">
-              <div class="h-10 w-10 mb-2 grid items-center font-bold">
+              <div class="h-8 w-8 mb-2 grid items-center font-bold">
                 {{ user === "system" ? "AskPDF" : user }}
               </div>
               <p>
@@ -219,7 +245,7 @@ This property is read-only. Modifying this property is a no-op.`,
 
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap");
-html {
+.dark html {
   background-color: rgb(41 37 36);
 }
 </style>

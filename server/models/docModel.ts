@@ -8,7 +8,11 @@ const docSchema = new mongoose.Schema({
     page: {
         type: String,
         required: true,
-    }
+    },
+    // userId: {
+    //     type: String,
+    //     required: true
+    // }
 });
 
-export const useDocModel = (collection = 'document') => mongoose.model('Document', docSchema, collection);
+export const DocumentModel = mongoose.model('DocumentModel', docSchema)

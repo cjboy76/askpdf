@@ -19,7 +19,7 @@ export default oauth.googleEventHandler({
     async onSuccess(event, { user }) {
         try {
             await User.create({
-                id: user.sub,
+                sub: user.sub,
                 name: user.name,
                 email: user.email,
                 picture: user.picture,

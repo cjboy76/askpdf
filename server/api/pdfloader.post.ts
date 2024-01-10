@@ -1,4 +1,5 @@
 import { getDocument, PDFDocumentProxy } from "pdfjs-dist";
+import { pdfModel } from "../models/pdfModel";
 
 export default defineEventHandler(async (event) => {
     const body = await readFormData(event)
@@ -13,6 +14,11 @@ export default defineEventHandler(async (event) => {
     const pdfDocument = await loadPdf(unitArray)
     const data = await extractPdfContent(pdfDocument)
     const raw = data.reduce((prev, curr) => prev + curr.textContent, '')
+
+    const pdfCreateRes = await pdfModel.create({
+        pdfName: file.name,
+        userId: '123456'
+    })
 
     return {
         data,

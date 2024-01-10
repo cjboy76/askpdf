@@ -1,8 +1,6 @@
-import mongoose from 'mongoose';
+import { defineMongooseModel } from '#nuxt/mongoose'
 
-const pdfSchema = new mongoose.Schema({
-    pdfName: String,
-    userId: String,
-});
-
-export const pdfModel = mongoose.model('pdfModel', pdfSchema)
+export const pdfModel = defineMongooseModel('pdfModel', {
+  pdfName: String,
+  userId: String
+})

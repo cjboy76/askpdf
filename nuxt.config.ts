@@ -5,19 +5,18 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   app: {
     head: {
-      title: "AskPDF"
+      title: 'AskPDF'
     }
   },
   nitro: {
     esbuild: {
       options: {
-        target: 'esnext',
-      },
-    },
+        target: 'esnext'
+      }
+    }
   },
   runtimeConfig: {
-    openaiApiKey: '',
-    mongoUri: ''
+    openaiApiKey: ''
   },
   modules: [
     '@vueuse/nuxt',
@@ -27,8 +26,9 @@ export default defineNuxtConfig({
     'nuxt-auth-utils'
   ],
   unocss: {
-    presets: [
-      presetUno()
-    ]
+    presets: [presetUno()]
   },
-});
+  mongoose: {
+    uri: process.env.MONGODB_URI
+  }
+})

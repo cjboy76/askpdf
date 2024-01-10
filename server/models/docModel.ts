@@ -1,18 +1,12 @@
-import mongoose from 'mongoose';
+import { defineMongooseModel } from '#nuxt/mongoose'
 
-const docSchema = new mongoose.Schema({
-    textContent: {
-        type: String,
-        required: true
-    },
-    page: {
-        type: String,
-        required: true,
-    },
-    // userId: {
-    //     type: String,
-    //     required: true
-    // }
-});
-
-export const DocumentModel = mongoose.model('DocumentModel', docSchema)
+export const DocumentModel = defineMongooseModel('DocumentModel', {
+  textContent: {
+    type: String,
+    required: true
+  },
+  page: {
+    type: String,
+    required: true
+  }
+})

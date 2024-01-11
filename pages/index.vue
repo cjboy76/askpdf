@@ -16,7 +16,6 @@ import {
   type UploadProps,
 } from "naive-ui";
 import { CloudUploadOutline } from "@vicons/ionicons5";
-import { useDoc } from "~/store";
 import { useMessage } from "naive-ui";
 import { useDark, useToggle } from "@vueuse/core";
 
@@ -26,7 +25,6 @@ const { loggedIn, user, clear } = useUserSession();
 
 const uploadFile = ref<UploadFileInfo[]>([]);
 const showModal = ref(false);
-const { setDocument } = useDoc();
 const message = useMessage();
 
 const onChange: UploadProps["onChange"] = ({ file }) => {
@@ -45,15 +43,20 @@ async function uploadPdfHandler() {
     const file = toRaw(uploadFile.value[0]);
     const formData = new FormData();
     formData.append("file", file.file!);
+    formData.append("user", user.value.sub);
+
     const pdfInfo = await $fetch("/api/pdfloader", {
       method: "post",
       body: formData,
     });
-    await $fetch("/api/createDocument", {
+    const apple = await $fetch("/api/createDocument", {
       method: "post",
-      body: pdfInfo,
+      body: {
+        document_id: pdfInfo.document_id,
+        data: pdfInfo.data
+      },
     });
-    setDocument(pdfInfo);
+    console.log({ apple })
   } catch (error) {
     message.error(error as string);
   } finally {
@@ -103,11 +106,11 @@ This property is read-only. Modifying this property is a no-op.`,
 
 const userDropOptions = [
   {
-    label: user.value.name,
+    label: user.value ? user.value.name : '',
     key: "profile",
   },
   {
-    label: "Logout",
+    label: "登出",
     key: "logout",
   },
 ];
@@ -121,44 +124,22 @@ const onUserSelect = (key: string) => {
 
 <template>
   <div class="h-screen grid grid-cols-6 dark:bg-stone-800 dark:text-stone-100">
-    <div
-      class="col-span-3 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"
-    ></div>
+    <div class="col-span-3 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"></div>
     <div class="col-span-3 flex flex-col h-full">
       <div class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col">
-        <div
-          class="sticky top-0 py-4 px-4 z-10 bg-white dark:bg-stone-800 flex justify-end items-center"
-        >
-          <n-button
-            @click="() => toggleDark()"
-            quaternary
-            class="dark:text-[#e5e7eb]"
-          >
+        <div class="sticky top-0 py-4 px-4 z-10 bg-white dark:bg-stone-800 flex justify-end items-center">
+          <n-button @click="() => toggleDark()" quaternary class="dark:text-[#e5e7eb]">
             外觀
           </n-button>
-          <n-button
-            quaternary
-            class="dark:text-[#e5e7eb]"
-            @click="showModal = true"
-          >
+          <n-button quaternary class="dark:text-[#e5e7eb]" @click="showModal = true" :disabled="loading">
             上傳文件
           </n-button>
           <a href="/api/auth/google" v-if="!loggedIn">
             <n-button quaternary class="dark:text-[#e5e7eb]"> 登入 </n-button>
           </a>
           <client-only>
-            <n-dropdown
-              v-if="loggedIn"
-              trigger="click"
-              :options="userDropOptions"
-              @select="onUserSelect"
-            >
-              <n-avatar
-                class="mx-4 cursor-pointer"
-                round
-                size="medium"
-                :src="user.picture"
-              />
+            <n-dropdown v-if="loggedIn" trigger="click" :options="userDropOptions" @select="onUserSelect">
+              <n-avatar class="mx-4 cursor-pointer" round size="medium" :src="user.picture" />
             </n-dropdown>
           </client-only>
         </div>
@@ -175,11 +156,7 @@ const onUserSelect = (key: string) => {
         <div v-for="{ time, message, user } of messages" :key="time">
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-center">
-              <n-avatar
-                class="w-8 h-8"
-                round
-                src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-              />
+              <n-avatar class="w-8 h-8" round src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg" />
             </div>
             <div class="col-span-7">
               <div class="h-8 w-8 mb-2 grid items-center font-bold">
@@ -201,22 +178,8 @@ const onUserSelect = (key: string) => {
     </div>
   </div>
   <n-modal v-model:show="showModal">
-    <n-card
-      title="上傳文件"
-      :bordered="false"
-      size="huge"
-      role="dialog"
-      aria-modal="true"
-      class="w-[500px]"
-    >
-      <n-upload
-        :multiple="false"
-        directory-dnd
-        accept=".pdf"
-        :on-change="onChange"
-        :show-remove-button="true"
-        :max="1"
-      >
+    <n-card title="上傳文件" :bordered="false" size="huge" role="dialog" aria-modal="true" class="w-[500px]">
+      <n-upload :multiple="false" directory-dnd accept=".pdf" :on-change="onChange" :show-remove-button="true" :max="1">
         <n-upload-dragger>
           <div style="margin-bottom: 12px">
             <n-icon size="48" :depth="3">
@@ -232,11 +195,7 @@ const onUserSelect = (key: string) => {
       <template #footer>
         <div class="flex justify-end">
           <n-button class="mr-4" @click="uploadPdfCanceller">取消</n-button>
-          <n-button
-            :disabled="uploadFile.length === 0"
-            @click="uploadPdfHandler"
-            >確認</n-button
-          >
+          <n-button :disabled="uploadFile.length === 0" @click="uploadPdfHandler">確認</n-button>
         </div>
       </template>
     </n-card>
@@ -245,6 +204,7 @@ const onUserSelect = (key: string) => {
 
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap");
+
 .dark html {
   background-color: rgb(41 37 36);
 }

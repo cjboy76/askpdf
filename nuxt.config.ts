@@ -16,7 +16,9 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
-    openaiApiKey: ''
+    openaiApiKey: '',
+    groupId: '',
+    clusterName: ''
   },
   modules: [
     '@vueuse/nuxt',

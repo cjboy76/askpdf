@@ -1,7 +1,5 @@
 import * as pdfjsLib from 'pdfjs-dist'
-import { Types } from 'mongoose'
 import { PDFDocument } from '../models/PDFDocument'
-import { TextEmbedding } from '../models/TextEmbedding'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/build/pdf.worker.mjs'
 
@@ -21,9 +19,6 @@ export default defineEventHandler(async (event) => {
 
   const matchedDoc = await PDFDocument.findOne({ name: file.name })
   if (matchedDoc) {
-    TextEmbedding.deleteMany({
-      _id: new Types.ObjectId(matchedDoc?._id)
-    })
     PDFDocument.deleteOne({ name: file.name })
   }
   const response = await PDFDocument.create({

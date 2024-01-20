@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose'
-import { Chroma } from "@langchain/community/vectorstores/chroma";
-import { OpenAIEmbeddings } from "@langchain/openai";
+import { Document } from 'langchain/document'
+import { usePinecone } from '../utils/pinecone'
 
 type CreateDocumentBody = {
   data: { page: number; textContent: string }[]
@@ -8,34 +8,25 @@ type CreateDocumentBody = {
   userSub: string
 }
 
-export default defineLazyEventHandler(async () => {
-  const apiKey = useRuntimeConfig().openaiApiKey
-  if (!apiKey) throw new Error('Missing OpenAI API key')
+export default defineEventHandler(async (event) => {
+  const { data, document_id, userSub } = await readBody<CreateDocumentBody>(
+    event
+  )
 
-  const embeddings = new OpenAIEmbeddings({
-    openAIApiKey: apiKey
-  });
-  const vectorStore = new Chroma(embeddings, {
-    collectionName: "textEmbStore",
-  });
-
-  return defineEventHandler(async (event) => {
-    const { data, document_id, userSub } = await readBody<CreateDocumentBody>(event)
-
-    await vectorStore.delete({ filter: { userSub } })
-
-    const documents = data.reduce((a, b) => {
-      const subPageText = b.textContent
-        .split('。')
-        .map((t) => ({ pageContent: t, metadata: { page: b.page, docId: document_id, userSub } }))
+  const docs = data
+    .reduce((a, b) => {
+      const subPageText = b.textContent.split('。').map(
+        (t) =>
+          new Document({
+            pageContent: t,
+            metadata: { page: b.page, docId: document_id, userSub }
+          })
+      )
       return [...a, ...subPageText]
-    }, [] as { pageContent: string; metadata: Record<string, any> }[]).filter(item => Boolean(item.pageContent))
+    }, [] as { pageContent: string; metadata: Record<string, any> }[])
+    .filter((item) => Boolean(item.pageContent))
 
-    const ids = await vectorStore.addDocuments(documents);
-    const response = await vectorStore.similaritySearch("正面", 5);
+  const ids = await usePinecone().addDocuments(docs)
 
-    console.log(response);
-
-    return { ids, vectorStore }
-  })
+  return ids
 })

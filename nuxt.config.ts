@@ -17,21 +17,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     openaiApiKey: '',
-    groupId: '',
-    clusterName: '',
     pineconeIndex: ''
   },
-  modules: [
-    '@vueuse/nuxt',
-    '@unocss/nuxt',
-    '@pinia/nuxt',
-    'nuxt-mongoose',
-    'nuxt-auth-utils'
-  ],
+  modules: ['@vueuse/nuxt', '@unocss/nuxt', '@pinia/nuxt', 'nuxt-auth-utils'],
   unocss: {
     presets: [presetUno()]
-  },
-  mongoose: {
-    uri: process.env.MONGODB_URI
   }
 })

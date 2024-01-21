@@ -28,9 +28,7 @@
     "@pinecone-database/pinecone": "^1.1.3",
     "@pinia/nuxt": "^0.5.1",
     "ai": "^2.2.25",
-    "chromadb": "^1.7.3",
     "langchain": "^0.1.3",
-    "nuxt-mongoose": "^1.0.3",
     "openai": "^4.20.0",
     "pdfjs-dist": "^4.0.189",
     "pinia": "^2.1.7"

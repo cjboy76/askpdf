@@ -17,7 +17,13 @@ import {
   type UploadFileInfo,
   type UploadProps
 } from 'naive-ui'
-import { CloudUploadOutline, Key, AtCircleSharp } from '@vicons/ionicons5'
+import {
+  CloudUploadOutline,
+  Key,
+  AtCircleSharp,
+  Document,
+  ColorPaletteOutline
+} from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
 import { useDark, useToggle, useStorage } from '@vueuse/core'
 import { useChat } from 'ai/vue'
@@ -26,7 +32,13 @@ const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
-const { messages, setMessages, handleSubmit, input, isLoading } = useChat({
+const {
+  messages,
+  setMessages,
+  handleSubmit,
+  input,
+  isLoading: useChatLoading
+} = useChat({
   headers: {
     'x-openai-key': storageOpenAIKey.value
   }
@@ -96,13 +108,15 @@ const onUserSelect = (key: string) => {
   }
 }
 let assistantCount = 0
+const answerLoading = ref(false)
 
 async function submitHandler(e: Event) {
-  if (!input.value) return
+  if (!input.value || answerLoading.value) return
   if (!storageOpenAIKey.value) {
     showKeyModal.value = true
     return
   }
+  answerLoading.value = true
   const similarityDocs = await $fetch('/api/queryVector', {
     method: 'post',
     body: { input: input.value },
@@ -117,6 +131,12 @@ async function submitHandler(e: Event) {
   ])
   handleSubmit(e)
 }
+
+watch(useChatLoading, (v) => {
+  if (!v) {
+    answerLoading.value = false
+  }
+})
 </script>
 
 <template>
@@ -126,7 +146,7 @@ async function submitHandler(e: Event) {
     ></div>
     <div class="col-span-5 flex flex-col h-full">
       <div
-        class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col flex-grow"
+        class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow"
       >
         <div
           class="sticky top-0 py-4 px-4 z-10 bg-white dark:bg-stone-800 flex justify-end items-center"
@@ -137,6 +157,9 @@ async function submitHandler(e: Event) {
             class="dark:text-[#e5e7eb] mx-1"
           >
             外觀
+            <template #icon>
+              <n-icon><ColorPaletteOutline /></n-icon>
+            </template>
           </n-button>
           <n-button
             quaternary
@@ -156,6 +179,9 @@ async function submitHandler(e: Event) {
             :disabled="fileUploading"
           >
             上傳文件
+            <template #icon>
+              <n-icon><Document /></n-icon>
+            </template>
           </n-button>
           <a href="/api/auth/google" v-if="!loggedIn">
             <n-button quaternary class="dark:text-[#e5e7eb]"> 登入 </n-button>
@@ -176,11 +202,9 @@ async function submitHandler(e: Event) {
             </n-dropdown>
           </client-only>
         </div>
-        <div v-if="messages.length === 0" class="text-center">
+        <div v-if="messages.length === 0" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4">AskPDF</h1>
-          <h2 class="text-xl font-bold text-center mb-4">
-            用 AI 和 PDF 聊天吧
-          </h2>
+          <h2 class="text-xl text-center mb-4">用 AI 問問 PDF</h2>
         </div>
         <div v-show="fileUploading" class="w-4/5 mx-auto">
           <n-skeleton text :repeat="2" />
@@ -192,7 +216,7 @@ async function submitHandler(e: Event) {
           v-show="role !== 'system'"
         >
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
-            <div class="col-span-1 flex justify-center">
+            <div class="col-span-1 flex justify-end">
               <n-avatar
                 v-show="role === 'user'"
                 class="w-8 h-8"
@@ -216,22 +240,23 @@ async function submitHandler(e: Event) {
           </div>
         </div>
       </div>
-      <div class="h-16 px-4 pb-6 pt-2">
-        <n-form class="w-5/6 mx-auto" @submit.prevent="submitHandler">
+      <div class="h-12 pt-2">
+        <n-form class="w-5/6 max-w-2xl mx-auto" @submit.prevent="submitHandler">
           <n-input-group>
             <n-input
               size="large"
               v-model:value="input"
               placeholder="輸入訊息"
-              :disabled="isLoading"
+              :disabled="answerLoading"
             >
             </n-input>
-            <n-button attr-type="submit" size="large" :disabled="isLoading">
+            <n-button attr-type="submit" size="large" :loading="answerLoading">
               Enter
             </n-button>
           </n-input-group>
         </n-form>
       </div>
+      <div class="text-center text-stone-400 py-1">cjboy76 © 2024</div>
     </div>
   </div>
   <n-modal v-model:show="showFileModal">

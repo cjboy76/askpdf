@@ -1,5 +1,4 @@
 import * as pdfjsLib from 'pdfjs-dist'
-import { PDFDocument } from '../models/PDFDocument'
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/build/pdf.worker.mjs'
 
@@ -17,20 +16,10 @@ export default defineEventHandler(async (event) => {
   const data = await extractPdfContent(pdfDocument)
   const raw = data.reduce((prev, curr) => prev + curr.textContent, '')
 
-  const matchedDoc = await PDFDocument.findOne({ name: file.name })
-  if (matchedDoc) {
-    PDFDocument.deleteOne({ name: file.name })
-  }
-  const response = await PDFDocument.create({
-    name: file.name,
-    user: body.get('user')
-  })
-
   return {
     data,
     raw,
-    name: file.name,
-    document_id: response._id
+    name: file.name
   }
 })
 

@@ -12,16 +12,20 @@ import {
   NSkeleton,
   NAvatar,
   NDropdown,
+  NInputGroup,
+  NForm,
   type UploadFileInfo,
   type UploadProps
 } from 'naive-ui'
 import { CloudUploadOutline } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
 import { useDark, useToggle } from '@vueuse/core'
+import { useChat } from 'ai/vue'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const { loggedIn, user, clear } = useUserSession()
+const { messages, setMessages, handleSubmit, input } = useChat()
 
 const uploadFile = ref<UploadFileInfo[]>([])
 const showModal = ref(false)
@@ -35,10 +39,10 @@ function uploadPdfCanceller() {
   uploadFile.value = []
   showModal.value = false
 }
-const loading = ref(false)
+const fileUploading = ref(false)
 
 async function uploadPdfHandler() {
-  loading.value = true
+  fileUploading.value = true
   try {
     const file = toRaw(uploadFile.value[0])
     const formData = new FormData()
@@ -49,61 +53,22 @@ async function uploadPdfHandler() {
       method: 'post',
       body: formData
     })
-    const apple = await $fetch('/api/createVecStore', {
+    const ids = await $fetch('/api/createVecStore', {
       method: 'post',
       body: {
-        document_id: pdfInfo.document_id,
         data: pdfInfo.data,
-        userSub: user.sub
+        pdf_name: pdfInfo.name,
+        user_sub: user.sub
       }
     })
-    console.log({ apple })
+    console.log({ ids })
   } catch (error) {
     message.error(error as string)
   } finally {
     uploadPdfCanceller()
-    loading.value = false
+    fileUploading.value = false
   }
 }
-
-const messages = <{ user: string; message: string; time: number }[]>[
-  { user: 'system', message: '今天天氣真好', time: 2101101010101 },
-  {
-    user: 'user',
-    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
-
-This property is read-only. Modifying this property is a no-op.`,
-    time: 24011313010101
-  },
-  {
-    user: 'system',
-    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
-
-This property is read-only. Modifying this property is a no-op.`,
-    time: 2401131301
-  },
-  {
-    user: 'user',
-    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
-
-This property is read-only. Modifying this property is a no-op.`,
-    time: 24011322220101
-  },
-  {
-    user: 'system',
-    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
-
-This property is read-only. Modifying this property is a no-op.`,
-    time: 24013333010101
-  },
-  {
-    user: 'user',
-    message: `The collection instance this model uses. A Mongoose collection is a thin wrapper around a [MongoDB Node.js driver collection](MongoDB Node.js driver collection). Using Model.collection means you bypass Mongoose middleware, validation, and casting.
-
-This property is read-only. Modifying this property is a no-op.`,
-    time: 4444
-  }
-]
 
 const userDropOptions = [
   {
@@ -121,6 +86,21 @@ const onUserSelect = (key: string) => {
     clear()
   }
 }
+let assistantCount = 0
+
+async function submitHandler(e: Event) {
+  if (!input.value) return
+  const similarityDocs = await $fetch('/api/queryVector', {
+    method: 'post',
+    body: { input: input.value }
+  })
+  const assistantPrompt = similarityDocs.map((s) => s.pageContent).join('')
+  setMessages([
+    ...messages.value,
+    { id: `${assistantCount++}`, role: 'assistant', content: assistantPrompt }
+  ])
+  handleSubmit(e)
+}
 </script>
 
 <template>
@@ -129,7 +109,9 @@ const onUserSelect = (key: string) => {
       class="col-span-3 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"
     ></div>
     <div class="col-span-3 flex flex-col h-full">
-      <div class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col">
+      <div
+        class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col flex-grow"
+      >
         <div
           class="sticky top-0 py-4 px-4 z-10 bg-white dark:bg-stone-800 flex justify-end items-center"
         >
@@ -144,7 +126,7 @@ const onUserSelect = (key: string) => {
             quaternary
             class="dark:text-[#e5e7eb]"
             @click="showModal = true"
-            :disabled="loading"
+            :disabled="fileUploading"
           >
             上傳文件
           </n-button>
@@ -173,35 +155,46 @@ const onUserSelect = (key: string) => {
             用 AI 和 PDF 聊天吧
           </h2>
         </div>
-        <div v-show="loading" class="w-4/5 mx-auto">
+        <div v-show="fileUploading" class="w-4/5 mx-auto">
           <n-skeleton text :repeat="2" />
           <n-skeleton text style="width: 80%; margin: 0 auto" />
         </div>
-        <div v-for="{ time, message, user } of messages" :key="time">
+        <div
+          v-for="{ content, role, id } of messages"
+          :key="id"
+          v-show="role !== 'system'"
+        >
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-center">
               <n-avatar
                 class="w-8 h-8"
                 round
-                src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+                :src="
+                  role === 'user'
+                    ? user.picture
+                    : 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg'
+                "
               />
             </div>
             <div class="col-span-7">
-              <div class="h-8 w-8 mb-2 grid items-center font-bold">
-                {{ user === 'system' ? 'AskPDF' : user }}
+              <div class="h-8 mb-2 grid items-center font-bold">
+                {{ role === 'assistant' ? 'AskPDF' : user.name }}
               </div>
               <p>
-                {{ message }}
+                {{ content }}
               </p>
             </div>
           </div>
         </div>
       </div>
       <div class="h-16 px-4 pb-6 pt-2">
-        <div class="w-5/6 mx-auto">
-          <n-input class="w-4/5 mx-auto" size="large" placeholder="輸入訊息">
-          </n-input>
-        </div>
+        <n-form class="w-5/6 mx-auto" @submit.prevent="submitHandler">
+          <n-input-group>
+            <n-input size="large" v-model:value="input" placeholder="輸入訊息">
+            </n-input>
+            <n-button attr-type="submit" size="large"> Enter </n-button>
+          </n-input-group>
+        </n-form>
       </div>
     </div>
   </div>

@@ -10,14 +10,15 @@ export default defineLazyEventHandler(() => {
   })
 
   return defineEventHandler(async (event) => {
-    const messages = await readBody<ChatCompletionMessageParam[]>(event)
+    const { messages } = await readBody<{
+      messages: ChatCompletionMessageParam[]
+    }>(event)
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
       messages,
       stream: true
     })
 
-    const stream = OpenAIStream(response)
-    return new StreamingTextResponse(stream)
+    return new StreamingTextResponse(OpenAIStream(response))
   })
 })

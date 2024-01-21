@@ -1,17 +1,14 @@
-import { Schema } from 'mongoose'
 import { Document } from 'langchain/document'
 import { usePinecone } from '../utils/pinecone'
 
 type CreateDocumentBody = {
   data: { page: number; textContent: string }[]
-  document_id: Schema.Types.ObjectId
-  userSub: string
+  pdf_name: string
+  user_sub: string
 }
 
 export default defineEventHandler(async (event) => {
-  const { data, document_id, userSub } = await readBody<CreateDocumentBody>(
-    event
-  )
+  const { data, pdf_name, user_sub } = await readBody<CreateDocumentBody>(event)
 
   const docs = data
     .reduce((a, b) => {
@@ -19,7 +16,7 @@ export default defineEventHandler(async (event) => {
         (t) =>
           new Document({
             pageContent: t,
-            metadata: { page: b.page, docId: document_id, userSub }
+            metadata: { page: b.page, user_sub, pdf_name }
           })
       )
       return [...a, ...subPageText]

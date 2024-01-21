@@ -1,6 +1,6 @@
-import OpenAI from 'openai'
 import { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { OpenAIStream, StreamingTextResponse } from 'ai'
+import { useOpenAI } from '../utils'
 
 const systemInput = `You are an experienced researcher, expert at interpreting and answering questions based on provided sources.
 Using the provided context, answer the user's question to the best of your ability using only the resources provided.
@@ -11,23 +11,16 @@ If there is no information in the context relevant to the question at hand, just
 
 REMEMBER: You must only use facts from the provided context.`
 
-export default defineLazyEventHandler(() => {
-  const apiKey = useRuntimeConfig().openaiApiKey
-  if (!apiKey) throw new Error('Missing OpenAI API key')
-  const openai = new OpenAI({
-    apiKey: apiKey
+export default defineEventHandler(async (event) => {
+  const { messages } = await readBody<{
+    messages: ChatCompletionMessageParam[]
+  }>(event)
+  const openai = useOpenAI(event)
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: [{ role: 'system', content: systemInput }, ...messages],
+    stream: true
   })
 
-  return defineEventHandler(async (event) => {
-    const { messages } = await readBody<{
-      messages: ChatCompletionMessageParam[]
-    }>(event)
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [{ role: 'system', content: systemInput }, ...messages],
-      stream: true
-    })
-
-    return new StreamingTextResponse(OpenAIStream(response))
-  })
+  return new StreamingTextResponse(OpenAIStream(response))
 })

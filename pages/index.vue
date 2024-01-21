@@ -17,18 +17,24 @@ import {
   type UploadFileInfo,
   type UploadProps
 } from 'naive-ui'
-import { CloudUploadOutline } from '@vicons/ionicons5'
+import { CloudUploadOutline, Key, AtCircleSharp } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
-import { useDark, useToggle } from '@vueuse/core'
+import { useDark, useToggle, useStorage } from '@vueuse/core'
 import { useChat } from 'ai/vue'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const { loggedIn, user, clear } = useUserSession()
-const { messages, setMessages, handleSubmit, input, isLoading } = useChat()
+const storageOpenAIKey = useStorage('openai_key', '')
+const { messages, setMessages, handleSubmit, input, isLoading } = useChat({
+  headers: {
+    'x-openai-key': storageOpenAIKey.value
+  }
+})
 
 const uploadFile = ref<UploadFileInfo[]>([])
-const showModal = ref(false)
+const showFileModal = ref(false)
+const showKeyModal = ref(false)
 const message = useMessage()
 
 const onChange: UploadProps['onChange'] = ({ file }) => {
@@ -37,7 +43,7 @@ const onChange: UploadProps['onChange'] = ({ file }) => {
 
 function uploadPdfCanceller() {
   uploadFile.value = []
-  showModal.value = false
+  showFileModal.value = false
 }
 const fileUploading = ref(false)
 
@@ -59,6 +65,9 @@ async function uploadPdfHandler() {
         data: pdfInfo.data,
         pdf_name: pdfInfo.name,
         user_sub: user.sub
+      },
+      headers: {
+        'x-openai-key': storageOpenAIKey.value
       }
     })
     console.log({ ids })
@@ -90,9 +99,16 @@ let assistantCount = 0
 
 async function submitHandler(e: Event) {
   if (!input.value) return
+  if (!storageOpenAIKey.value) {
+    showKeyModal.value = true
+    return
+  }
   const similarityDocs = await $fetch('/api/queryVector', {
     method: 'post',
-    body: { input: input.value }
+    body: { input: input.value },
+    headers: {
+      'x-openai-key': storageOpenAIKey.value
+    }
   })
   const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
   setMessages([
@@ -106,9 +122,9 @@ async function submitHandler(e: Event) {
 <template>
   <div class="h-screen grid grid-cols-6 dark:bg-stone-800 dark:text-stone-100">
     <div
-      class="col-span-3 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"
+      class="col-span-1 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"
     ></div>
-    <div class="col-span-3 flex flex-col h-full">
+    <div class="col-span-5 flex flex-col h-full">
       <div
         class="max-h-[calc(100vh-64px)] overflow-y-auto flex flex-col flex-grow"
       >
@@ -118,14 +134,25 @@ async function submitHandler(e: Event) {
           <n-button
             @click="() => toggleDark()"
             quaternary
-            class="dark:text-[#e5e7eb]"
+            class="dark:text-[#e5e7eb] mx-1"
           >
             外觀
           </n-button>
           <n-button
             quaternary
-            class="dark:text-[#e5e7eb]"
-            @click="showModal = true"
+            class="dark:text-[#e5e7eb] mx-1"
+            @click="showKeyModal = true"
+            :disabled="fileUploading"
+          >
+            OpenAI
+            <template #icon>
+              <n-icon><Key /></n-icon>
+            </template>
+          </n-button>
+          <n-button
+            quaternary
+            class="dark:text-[#e5e7eb] mx-1"
+            @click="showFileModal = true"
             :disabled="fileUploading"
           >
             上傳文件
@@ -167,14 +194,16 @@ async function submitHandler(e: Event) {
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-center">
               <n-avatar
+                v-show="role === 'user'"
                 class="w-8 h-8"
                 round
-                :src="
-                  role === 'user'
-                    ? user.picture
-                    : 'https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg'
-                "
+                :src="user.picture"
               />
+              <n-avatar v-show="role === 'assistant'" class="w-8 h-8" round>
+                <n-icon>
+                  <AtCircleSharp />
+                </n-icon>
+              </n-avatar>
             </div>
             <div class="col-span-7">
               <div class="h-8 mb-2 grid items-center font-bold">
@@ -205,7 +234,7 @@ async function submitHandler(e: Event) {
       </div>
     </div>
   </div>
-  <n-modal v-model:show="showModal">
+  <n-modal v-model:show="showFileModal">
     <n-card
       title="上傳文件"
       :bordered="false"
@@ -242,6 +271,28 @@ async function submitHandler(e: Event) {
             @click="uploadPdfHandler"
             >確認</n-button
           >
+        </div>
+      </template>
+    </n-card>
+  </n-modal>
+  <n-modal v-model:show="showKeyModal">
+    <n-card
+      title="OpenAI Key"
+      :bordered="false"
+      size="huge"
+      role="dialog"
+      aria-modal="true"
+      class="w-[500px]"
+    >
+      <n-input
+        type="password"
+        show-password-on="mousedown"
+        placeholder="貼上 OpenAI API Key"
+        v-model:value="storageOpenAIKey"
+      />
+      <template #footer>
+        <div class="flex justify-end">
+          <n-button @click="showKeyModal = false">關閉</n-button>
         </div>
       </template>
     </n-card>

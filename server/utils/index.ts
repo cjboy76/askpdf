@@ -1,19 +1,24 @@
 import { Pinecone } from '@pinecone-database/pinecone'
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { PineconeStore } from 'langchain/vectorstores/pinecone'
+import type { EventHandlerRequest, H3Event } from 'h3'
+import OpenAI from 'openai'
 
 let _pineconeStore: PineconeStore | null = null
 
-export function usePinecone() {
+export function usePinecone(event: H3Event<EventHandlerRequest>) {
+  const apiKey =
+    process.env.NUXT_OPENAI_API_KEY ||
+    event.node.req.headers['x-openai-key']?.toString() ||
+    ''
   if (!_pineconeStore) {
     try {
-      const openaiApiKey = useRuntimeConfig().openaiApiKey
       const pineconeIndex = useRuntimeConfig().pineconeIndex
       const pc = new Pinecone()
       const pcIndex = pc.Index(pineconeIndex)
 
       const embeddings = new OpenAIEmbeddings({
-        openAIApiKey: openaiApiKey
+        openAIApiKey: apiKey
       })
 
       _pineconeStore = new PineconeStore(embeddings, { pineconeIndex: pcIndex })
@@ -23,4 +28,13 @@ export function usePinecone() {
   }
 
   return _pineconeStore
+}
+
+export function useOpenAI(event: H3Event<EventHandlerRequest>) {
+  const apiKey =
+    process.env.NUXT_OPENAI_API_KEY ||
+    event.node.req.headers['x-openai-key']?.toString()
+  return new OpenAI({
+    apiKey
+  })
 }

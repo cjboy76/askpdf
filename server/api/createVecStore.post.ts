@@ -1,5 +1,5 @@
 import { Document } from 'langchain/document'
-import { usePinecone } from '../utils/pinecone'
+import { usePinecone } from '../utils'
 
 type CreateDocumentBody = {
   data: { page: number; textContent: string }[]
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     }, [] as { pageContent: string; metadata: Record<string, any> }[])
     .filter((item) => Boolean(item.pageContent))
 
-  const ids = await usePinecone().addDocuments(docs)
+  const ids = await usePinecone(event).addDocuments(docs)
 
   return ids
 })

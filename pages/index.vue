@@ -25,7 +25,7 @@ import { useChat } from 'ai/vue'
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
 const { loggedIn, user, clear } = useUserSession()
-const { messages, setMessages, handleSubmit, input } = useChat()
+const { messages, setMessages, handleSubmit, input, isLoading } = useChat()
 
 const uploadFile = ref<UploadFileInfo[]>([])
 const showModal = ref(false)
@@ -94,10 +94,10 @@ async function submitHandler(e: Event) {
     method: 'post',
     body: { input: input.value }
   })
-  const assistantPrompt = similarityDocs.map((s) => s.pageContent).join('')
+  const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
   setMessages([
     ...messages.value,
-    { id: `${assistantCount++}`, role: 'assistant', content: assistantPrompt }
+    { id: `${assistantCount++}`, role: 'system', content: systemPrompt }
   ])
   handleSubmit(e)
 }
@@ -190,9 +190,16 @@ async function submitHandler(e: Event) {
       <div class="h-16 px-4 pb-6 pt-2">
         <n-form class="w-5/6 mx-auto" @submit.prevent="submitHandler">
           <n-input-group>
-            <n-input size="large" v-model:value="input" placeholder="輸入訊息">
+            <n-input
+              size="large"
+              v-model:value="input"
+              placeholder="輸入訊息"
+              :disabled="isLoading"
+            >
             </n-input>
-            <n-button attr-type="submit" size="large"> Enter </n-button>
+            <n-button attr-type="submit" size="large" :disabled="isLoading">
+              Enter
+            </n-button>
           </n-input-group>
         </n-form>
       </div>

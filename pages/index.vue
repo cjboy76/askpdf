@@ -144,15 +144,17 @@ watch(useChatLoading, (v) => {
     answerLoading.value = false
   }
 })
+
+const pdfSrc = ref(
+  'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf'
+)
 </script>
 
 <template>
   <div class="h-screen grid grid-cols-6">
-    <div class="col-span-3 bg-gray-100 h-full flex flex-col">
+    <div class="col-span-3 bg-gray-100 h-full flex flex-col flex-grow">
       <ClientOnly fallback-tag="span" fallback="Loading comments...">
-        <!-- <PdfViewer
-          pdfSrc="https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf"
-        /> -->
+        <PdfViewer :pdfSrc="pdfSrc" />
       </ClientOnly>
     </div>
     <div class="col-span-3 flex flex-col h-full">

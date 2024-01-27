@@ -18,6 +18,7 @@
     "naive-ui": "^2.35.0",
     "nuxt": "^3.8.1",
     "nuxt-auth-utils": "^0.0.14",
+    "vite-plugin-top-level-await": "^1.4.1",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"
   },

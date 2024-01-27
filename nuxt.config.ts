@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { presetUno } from 'unocss'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
@@ -22,5 +23,8 @@ export default defineNuxtConfig({
   modules: ['@vueuse/nuxt', '@unocss/nuxt', '@pinia/nuxt', 'nuxt-auth-utils'],
   unocss: {
     presets: [presetUno()]
+  },
+  vite: {
+    plugins: [topLevelAwait()]
   }
 })

@@ -14,6 +14,7 @@
             ref="inputPageText"
             size="tiny"
             v-model:value="pageNumText"
+            placeholder="1"
             @change="pageNumTextHandler"
           />
         </div>
@@ -110,7 +111,12 @@ function togglePageHandler(direction: number) {
 
 const inputPageText = ref()
 function pageNumTextHandler() {
-  pageNum.value = Number(pageNumText.value)
+  const num = Number(pageNumText.value)
+  if (!num || num < 1 || num > pdfDoc.numPages) {
+    pageNumText.value = ''
+    return
+  }
+  pageNum.value = num
   inputPageText.value && inputPageText.value.blur()
   renderPage(pageNum.value)
 }

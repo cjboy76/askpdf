@@ -302,8 +302,11 @@ const pdfSrc = ref(
       </n-upload>
       <template #footer>
         <div class="flex justify-end">
-          <n-button class="mr-4" @click="uploadPdfCanceller">取消</n-button>
+          <n-button quaternary class="mr-4" @click="uploadPdfCanceller"
+            >取消</n-button
+          >
           <n-button
+            quaternary
             :disabled="uploadFile.length === 0"
             @click="uploadPdfHandler"
             >確認</n-button
@@ -329,7 +332,7 @@ const pdfSrc = ref(
       />
       <template #footer>
         <div class="flex justify-end">
-          <n-button @click="showKeyModal = false">關閉</n-button>
+          <n-button quaternary @click="showKeyModal = false">關閉</n-button>
         </div>
       </template>
     </n-card>

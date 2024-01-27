@@ -5,10 +5,10 @@ export default defineEventHandler(async (event) => {
   try {
     const results = await usePinecone(event).similaritySearch(input, 5)
     return results
-  } catch (error) {
+  } catch (error: unknown) {
     throw createError({
-      statusCode: error.status,
-      statusMessage: error.error.message
+      statusCode: (error as any).status,
+      statusMessage: (error as any).error.message
     })
   }
 })

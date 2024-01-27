@@ -27,6 +27,7 @@ import {
 import { useMessage } from 'naive-ui'
 import { useDark, useToggle, useStorage } from '@vueuse/core'
 import { useChat } from 'ai/vue'
+import type { NuxtError } from 'nuxt/app'
 
 const isDark = useDark()
 const toggleDark = useToggle(isDark)
@@ -117,19 +118,26 @@ async function submitHandler(e: Event) {
     return
   }
   answerLoading.value = true
-  const similarityDocs = await $fetch('/api/queryVector', {
-    method: 'post',
-    body: { input: input.value },
-    headers: {
-      'x-openai-key': storageOpenAIKey.value
-    }
-  })
-  const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
-  setMessages([
-    ...messages.value,
-    { id: `${assistantCount++}`, role: 'system', content: systemPrompt }
-  ])
-  handleSubmit(e)
+  try {
+    const similarityDocs = await $fetch('/api/queryVector', {
+      method: 'post',
+      body: { input: input.value },
+      headers: {
+        'x-openai-key': storageOpenAIKey.value
+      }
+    })
+    const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
+    setMessages([
+      ...messages.value,
+      { id: `${assistantCount++}`, role: 'system', content: systemPrompt }
+    ])
+    handleSubmit(e)
+  } catch (error: unknown) {
+    const { message: errorMessage } = error as NuxtError
+    message.error(errorMessage)
+  } finally {
+  }
+  answerLoading.value = false
 }
 
 watch(useChatLoading, (v) => {
@@ -162,6 +170,7 @@ watch(useChatLoading, (v) => {
             </template>
           </n-button>
           <n-button
+            v-if="user"
             quaternary
             class="dark:text-[#e5e7eb] mx-1"
             @click="showKeyModal = true"
@@ -173,6 +182,7 @@ watch(useChatLoading, (v) => {
             </template>
           </n-button>
           <n-button
+            v-if="user"
             quaternary
             class="dark:text-[#e5e7eb] mx-1"
             @click="showFileModal = true"
@@ -183,9 +193,6 @@ watch(useChatLoading, (v) => {
               <n-icon><Document /></n-icon>
             </template>
           </n-button>
-          <a href="/api/auth/google" v-if="!loggedIn">
-            <n-button quaternary class="dark:text-[#e5e7eb]"> 登入 </n-button>
-          </a>
           <client-only>
             <n-dropdown
               v-if="loggedIn"
@@ -203,8 +210,10 @@ watch(useChatLoading, (v) => {
           </client-only>
         </div>
         <div v-if="messages.length === 0" class="text-center mt-20">
-          <h1 class="text-4xl font-bold text-center mb-4">AskPDF</h1>
-          <h2 class="text-xl text-center mb-4">用 AI 問問 PDF</h2>
+          <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
+          <a href="/api/auth/google" v-if="!loggedIn">
+            <n-button class="dark:text-[#e5e7eb]"> 登入 Google </n-button>
+          </a>
         </div>
         <div v-show="fileUploading" class="w-4/5 mx-auto">
           <n-skeleton text :repeat="2" />
@@ -250,7 +259,12 @@ watch(useChatLoading, (v) => {
               :disabled="answerLoading"
             >
             </n-input>
-            <n-button attr-type="submit" size="large" :loading="answerLoading">
+            <n-button
+              attr-type="submit"
+              size="large"
+              :loading="answerLoading"
+              :disabled="!user"
+            >
               Enter
             </n-button>
           </n-input-group>

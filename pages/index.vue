@@ -22,15 +22,14 @@ import {
   Key,
   AtCircleSharp,
   Document,
-  ColorPaletteOutline
+  ColorPaletteOutline,
+  Trash
 } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
-import { useDark, useToggle, useStorage } from '@vueuse/core'
+import { useToggle, useStorage } from '@vueuse/core'
 import { useChat } from 'ai/vue'
 import type { NuxtError } from 'nuxt/app'
 
-const isDark = useDark()
-const toggleDark = useToggle(isDark)
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
 const {
@@ -148,31 +147,25 @@ watch(useChatLoading, (v) => {
 </script>
 
 <template>
-  <div class="h-screen grid grid-cols-6 dark:bg-stone-800 dark:text-stone-100">
-    <div
-      class="col-span-1 bg-gray-100 h-full flex flex-col dark:bg-stone-600 dark:text-stone-100"
-    ></div>
-    <div class="col-span-5 flex flex-col h-full">
+  <div class="h-screen grid grid-cols-6">
+    <div class="col-span-3 bg-gray-100 h-full flex flex-col">
+      <ClientOnly fallback-tag="span" fallback="Loading comments...">
+        <!-- <PdfViewer
+          pdfSrc="https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf"
+        /> -->
+      </ClientOnly>
+    </div>
+    <div class="col-span-3 flex flex-col h-full">
       <div
         class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow"
       >
         <div
-          class="sticky top-0 py-4 px-4 z-10 bg-white dark:bg-stone-800 flex justify-end items-center"
+          class="sticky top-0 py-4 px-4 z-10 bg-white flex justify-end items-center"
         >
-          <n-button
-            @click="() => toggleDark()"
-            quaternary
-            class="dark:text-[#e5e7eb] mx-1"
-          >
-            外觀
-            <template #icon>
-              <n-icon><ColorPaletteOutline /></n-icon>
-            </template>
-          </n-button>
           <n-button
             v-if="user"
             quaternary
-            class="dark:text-[#e5e7eb] mx-1"
+            class="mx-1"
             @click="showKeyModal = true"
             :disabled="fileUploading"
           >
@@ -184,7 +177,7 @@ watch(useChatLoading, (v) => {
           <n-button
             v-if="user"
             quaternary
-            class="dark:text-[#e5e7eb] mx-1"
+            class="mx-1"
             @click="showFileModal = true"
             :disabled="fileUploading"
           >
@@ -211,8 +204,11 @@ watch(useChatLoading, (v) => {
         </div>
         <div v-if="messages.length === 0" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
+          <h3 v-if="loggedIn" class="font-bold text-center mb-4 opacity-50">
+            上傳文件，開始體驗
+          </h3>
           <a href="/api/auth/google" v-if="!loggedIn">
-            <n-button class="dark:text-[#e5e7eb]"> 登入 Google </n-button>
+            <n-button> 登入 Google </n-button>
           </a>
         </div>
         <div v-show="fileUploading" class="w-4/5 mx-auto">
@@ -340,8 +336,4 @@ watch(useChatLoading, (v) => {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap');
-
-.dark html {
-  background-color: rgb(41 37 36);
-}
 </style>

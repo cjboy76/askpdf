@@ -15,20 +15,22 @@ import {
   NInputGroup,
   NForm,
   type UploadFileInfo,
-  type UploadProps
+  type UploadProps,
+  c
 } from 'naive-ui'
 import {
   CloudUploadOutline,
   Key,
   AtCircleSharp,
-  Document,
-  ColorPaletteOutline,
-  Trash
+  Document
 } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
-import { useToggle, useStorage } from '@vueuse/core'
+import { useStorage } from '@vueuse/core'
 import { useChat } from 'ai/vue'
 import type { NuxtError } from 'nuxt/app'
+import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
+import { pdfToBase64 } from '~/utils/parser'
+import { get } from 'idb-keyval'
 
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
@@ -58,11 +60,25 @@ function uploadPdfCanceller() {
   showFileModal.value = false
 }
 const fileUploading = ref(false)
+const { data: fileDB } = useIDBKeyval('askpdf-file', '')
+const { data: idsDB } = useIDBKeyval<string[]>('askpdf-ids', [])
 
 async function uploadPdfHandler() {
+  const file = toRaw(uploadFile.value[0])
+  uploadPdfCanceller()
+  if (!file.file) return
+
+  if (idsDB.value.length) {
+    await $fetch('/api/deleteVector', {
+      method: 'delete',
+      body: {
+        ids: idsDB.value
+      }
+    })
+  }
+
   fileUploading.value = true
   try {
-    const file = toRaw(uploadFile.value[0])
     const formData = new FormData()
     formData.append('file', file.file!)
     formData.append('user', user.value.sub)
@@ -76,17 +92,21 @@ async function uploadPdfHandler() {
       body: {
         data: pdfInfo.data,
         pdf_name: pdfInfo.name,
-        user_sub: user.sub
+        user_sub: user.value.sub
       },
       headers: {
         'x-openai-key': storageOpenAIKey.value
       }
     })
-    console.log({ ids })
+    const base64File = await pdfToBase64(file.file as File)
+    idsDB.value = ids
+    fileDB.value = base64File
+
+    const pdfBlob = new Blob([file.file!], { type: 'application/pdf' })
+    pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
     message.error(error as string)
   } finally {
-    uploadPdfCanceller()
     fileUploading.value = false
   }
 }
@@ -145,9 +165,18 @@ watch(useChatLoading, (v) => {
   }
 })
 
-const pdfSrc = ref(
-  'https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf'
-)
+const pdfSrc = ref('')
+onMounted(async () => {
+  const pdfFromStore = await get('askpdf-file')
+  if (pdfFromStore) {
+    const file = base64ToPdf(pdfFromStore)
+    pdfSrc.value = URL.createObjectURL(file)
+  }
+})
+
+onUnmounted(() => {
+  pdfSrc.value && URL.revokeObjectURL(pdfSrc.value)
+})
 </script>
 
 <template>

@@ -7,6 +7,7 @@
           quaternary
           class="mx-1"
           @click="togglePageHandler(-1)"
+          :disabled="!props.pdfSrc"
           >Up</n-button
         >
         <div class="w-14 flex mx-1">
@@ -16,6 +17,7 @@
             v-model:value="pageNumText"
             placeholder="1"
             @change="pageNumTextHandler"
+            :disabled="!props.pdfSrc"
           />
         </div>
         <div class="grid place-items-center mx-1">
@@ -26,6 +28,7 @@
           quaternary
           class="mx-1"
           @click="togglePageHandler(1)"
+          :disabled="!props.pdfSrc"
           >Down</n-button
         >
       </div>
@@ -121,7 +124,10 @@ function pageNumTextHandler() {
   renderPage(pageNum.value)
 }
 
-onMounted(() => loadPdf())
+watch(
+  () => props.pdfSrc,
+  (value) => value && loadPdf()
+)
 
 onUnmounted(() => {
   if (loadingTask) loadingTask.destroy()

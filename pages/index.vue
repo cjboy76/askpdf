@@ -50,6 +50,7 @@ const uploadFile = ref<UploadFileInfo[]>([])
 const showFileModal = ref(false)
 const showKeyModal = ref(false)
 const message = useMessage()
+const relatedPagesSet = new Set<number>()
 
 const onChange: UploadProps['onChange'] = ({ file }) => {
   uploadFile.value.push(file)
@@ -130,6 +131,11 @@ const onUserSelect = (key: string) => {
 let assistantCount = 0
 const answerLoading = ref(false)
 
+type SimilarityDocument = {
+  pageContent: string
+  metadata: { page: number; user_sub: string; pdf_name: string }
+}
+
 async function submitHandler(e: Event) {
   if (!input.value || answerLoading.value) return
   if (!storageOpenAIKey.value) {
@@ -145,6 +151,12 @@ async function submitHandler(e: Event) {
         'x-openai-key': storageOpenAIKey.value
       }
     })
+
+    relatedPagesSet.clear()
+    ;(similarityDocs as SimilarityDocument[])
+      .sort((a, b) => a.metadata.page - b.metadata.page)
+      .forEach((s) => relatedPagesSet.add(s.metadata.page))
+
     const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
     setMessages([
       ...messages.value,
@@ -177,14 +189,19 @@ onMounted(async () => {
 onUnmounted(() => {
   pdfSrc.value && URL.revokeObjectURL(pdfSrc.value)
 })
+
+const viewerRef = ref()
+function setPage(p: number) {
+  viewerRef.value.setPage(p)
+}
 </script>
 
 <template>
   <div class="h-screen grid grid-cols-6">
     <div class="col-span-3 bg-gray-100 h-full flex flex-col flex-grow">
-      <ClientOnly fallback-tag="span" fallback="Loading comments...">
-        <PdfViewer :pdfSrc="pdfSrc" />
-      </ClientOnly>
+      <client-only fallback-tag="span" fallback="Loading comments...">
+        <PdfViewer ref="viewerRef" :pdfSrc="pdfSrc" />
+      </client-only>
     </div>
     <div class="col-span-3 flex flex-col h-full">
       <div
@@ -274,6 +291,19 @@ onUnmounted(() => {
               </p>
             </div>
           </div>
+        </div>
+        <div
+          v-show="!useChatLoading && relatedPagesSet.size !== 0"
+          class="w-3/5 mx-auto"
+        >
+          <span
+            v-for="(page, index) of relatedPagesSet"
+            :key="index"
+            class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
+            @click="setPage(page)"
+          >
+            #{{ page }}</span
+          >
         </div>
       </div>
       <div class="h-12 pt-2">

@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-hidden h-full">
-    <div class="flex justify-center items-center py-1 bg-white">
+    <div class="flex justify-between items-center py-1 bg-white">
       <div class="flex justify-center items-center">
         <n-button
           size="small"
@@ -8,8 +8,11 @@
           class="mx-1"
           @click="togglePageHandler(-1)"
           :disabled="!props.pdfSrc"
-          >Up</n-button
         >
+          <template #icon>
+            <n-icon><ChevronUp /></n-icon>
+          </template>
+        </n-button>
         <div class="w-14 flex mx-1">
           <n-input
             ref="inputPageText"
@@ -29,74 +32,61 @@
           class="mx-1"
           @click="togglePageHandler(1)"
           :disabled="!props.pdfSrc"
-          >Down</n-button
         >
+          <template #icon>
+            <n-icon><ChevronDown /></n-icon>
+          </template>
+        </n-button>
+      </div>
+      <div>
+        <n-button
+          size="small"
+          quaternary
+          class="mx-1"
+          :disabled="!props.pdfSrc"
+        >
+          <template #icon>
+            <n-icon><RemoveOutline /></n-icon>
+          </template>
+        </n-button>
+        <n-button
+          size="small"
+          quaternary
+          class="mx-1"
+          :disabled="!props.pdfSrc"
+        >
+          <template #icon>
+            <n-icon><AddOutline /></n-icon>
+          </template>
+        </n-button>
       </div>
     </div>
     <div class="grid place-items-center overflow-hidden h-full">
-      <client-only>
-        <canvas ref="canvas"></canvas>
-      </client-only>
+      <canvas ref="canvas" id="canvas"></canvas>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist'
-import { ref, onMounted, onUnmounted } from 'vue'
-import { NInput, NButton } from 'naive-ui'
+import { ref, onUnmounted } from 'vue'
+import { NInput, NButton, NIcon } from 'naive-ui'
+import {
+  ChevronUp,
+  ChevronDown,
+  AddOutline,
+  RemoveOutline
+} from '@vicons/ionicons5'
+import { PDFViewer } from '#imports'
 
 const props = defineProps({
   pdfSrc: String
 })
 const canvas = ref<HTMLCanvasElement | null>()
-let loadingTask: PDFDocumentLoadingTask
-let pdfDoc: PDFDocumentProxy
 const pageNum = ref(1)
 const pages = ref(0)
 const pageNumText = ref('1')
 
-async function renderPage(number: number) {
-  if (!pdfDoc) return
-  pdfDoc.getPage(number).then((page) => {
-    const viewport = page.getViewport({ scale: 0.8 })
-    const context = canvas.value!.getContext('2d')
-
-    let resolution = 2 // for example
-
-    canvas.value!.height = resolution * viewport.height //actual size
-    canvas.value!.width = resolution * viewport.width
-
-    canvas.value!.style.height = viewport.height + 'px' //showing size will be smaller size
-    canvas.value!.style.width = viewport.width + 'px'
-
-    // Prepare object needed by render method
-    var renderContext = {
-      canvasContext: context!,
-      viewport: viewport,
-      transform: [resolution, 0, 0, resolution, 0, 0] // force it bigger size
-    }
-
-    // Render PDF page
-    page.render(renderContext)
-  })
-}
-
-async function loadPdf() {
-  const PDFJSLib = await import('pdfjs-dist')
-
-  PDFJSLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString()
-
-  loadingTask = PDFJSLib.getDocument({ url: props.pdfSrc })
-  loadingTask.promise.then((pdfDoc_) => {
-    pdfDoc = pdfDoc_
-    pages.value = pdfDoc.numPages
-    renderPage(pageNum.value)
-  })
-}
+let pdfViewer: PDFViewer
 
 function togglePageHandler(direction: number) {
   pageNum.value += direction
@@ -104,32 +94,44 @@ function togglePageHandler(direction: number) {
     pageNum.value = 1
     return
   }
-  if (pageNum.value > pdfDoc.numPages) {
-    pageNum.value = pdfDoc.numPages
+  if (pageNum.value > pdfViewer.pdfDoc!.numPages) {
+    pageNum.value = pdfViewer.pdfDoc!.numPages
     return
   }
   pageNumText.value = String(pageNum.value)
-  renderPage(pageNum.value)
+  pdfViewer.renderPage(pageNum.value)
+}
+
+function setPage(num: number) {
+  pageNum.value = num
+  pageNumText.value = num.toString()
+  pdfViewer.renderPage(num)
 }
 
 const inputPageText = ref()
 function pageNumTextHandler() {
   const num = Number(pageNumText.value)
-  if (!num || num < 1 || num > pdfDoc.numPages) {
+  if (!num || num < 1 || num > pdfViewer.pdfDoc!.numPages) {
     pageNumText.value = ''
     return
   }
   pageNum.value = num
   inputPageText.value && inputPageText.value.blur()
-  renderPage(pageNum.value)
+  pdfViewer.renderPage(pageNum.value)
 }
 
 watch(
   () => props.pdfSrc,
-  (value) => value && loadPdf()
+  (value) => value && pdfViewer.setPdfSrc(value)
 )
 
+onMounted(() => (pdfViewer = new PDFViewer(document.querySelector('#canvas'))))
+
 onUnmounted(() => {
-  if (loadingTask) loadingTask.destroy()
+  if (pdfViewer.loadingTask) pdfViewer.destroyLoadingTask()
+})
+
+defineExpose({
+  setPage
 })
 </script>

@@ -198,9 +198,15 @@ function setPage(p: number) {
 
 <template>
   <div class="h-screen grid grid-cols-6">
-    <div class="col-span-3 bg-gray-100 h-full flex flex-col flex-grow">
+    <div class="col-span-3 bg-gray-100 h-full flex flex-col flex-grow relative">
       <client-only fallback-tag="span" fallback="Loading comments...">
-        <PdfViewer ref="viewerRef" :pdfSrc="pdfSrc" />
+        <PdfViewer v-if="user" ref="viewerRef" :pdfSrc="pdfSrc" />
+        <div
+          v-else
+          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        >
+          d(`･∀･)b
+        </div>
       </client-only>
     </div>
     <div class="col-span-3 flex flex-col h-full">

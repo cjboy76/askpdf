@@ -1,6 +1,6 @@
 import { Pinecone } from '@pinecone-database/pinecone'
 import { OpenAIEmbeddings } from '@langchain/openai'
-import { PineconeStore } from 'langchain/vectorstores/pinecone'
+import { PineconeStore } from '@langchain/community/vectorstores/pinecone'
 import type { EventHandlerRequest, H3Event } from 'h3'
 import OpenAI from 'openai'
 

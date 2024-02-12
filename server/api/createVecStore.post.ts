@@ -1,4 +1,4 @@
-import { Document } from 'langchain/document'
+import { Document } from '@langchain/core/documents'
 import { usePinecone } from '../utils'
 
 type CreateDocumentBody = {

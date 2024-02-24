@@ -40,23 +40,26 @@ export class PDFViewer {
   }
 
   async loadPdf() {
-    const PDFJSLib = await import('pdfjs-dist')
+    try {
+      const PDFJSLib = await import('pdfjs-dist')
 
-    PDFJSLib.GlobalWorkerOptions.workerSrc = new URL(
-      'pdfjs-dist/build/pdf.worker.min.mjs',
-      import.meta.url
-    ).toString()
+      PDFJSLib.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url
+      ).toString()
 
-    this.loadingTask = PDFJSLib.getDocument({ url: this.pdfSrc })
-    this.loadingTask.promise.then((pdfDoc_) => {
-      this.pdfDoc = pdfDoc_
+      this.loadingTask = PDFJSLib.getDocument({ url: this.pdfSrc })
+      const _pdfDoc = await this.loadingTask.promise
+      this.pdfDoc = _pdfDoc
       this.renderPage(1)
-    })
+    } finally {
+      return this.pdfDoc
+    }
   }
 
   setPdfSrc(value: string) {
     this.pdfSrc = value
-    this.loadPdf()
+    return this.loadPdf()
   }
 
   destroyLoadingTask() {

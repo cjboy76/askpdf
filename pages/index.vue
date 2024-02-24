@@ -69,6 +69,7 @@ async function uploadPdfHandler() {
   const file = toRaw(uploadFile.value[0])
   uploadPdfCanceller()
   if (!file.file) return
+  fileUploading.value = true
 
   if (idsDB.value.length) {
     await $fetch('/api/deleteVector', {
@@ -79,7 +80,6 @@ async function uploadPdfHandler() {
     })
   }
 
-  fileUploading.value = true
   try {
     const formData = new FormData()
     formData.append('file', file.file!)
@@ -235,7 +235,6 @@ function setPage(p: number) {
         <div
           class="sticky top-0 py-4 px-4 z-10 bg-white flex justify-end items-center"
         >
-          <span @click="scrollToBottom">click me</span>
           <n-button
             v-if="user"
             quaternary
@@ -340,14 +339,14 @@ function setPage(p: number) {
               size="large"
               v-model:value="input"
               placeholder="輸入訊息"
-              :disabled="answerLoading"
+              :disabled="answerLoading || fileUploading"
             >
             </n-input>
             <n-button
               attr-type="submit"
               size="large"
               :loading="answerLoading"
-              :disabled="!user"
+              :disabled="!user || fileUploading"
             >
               Enter
             </n-button>

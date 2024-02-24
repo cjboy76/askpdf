@@ -22,7 +22,8 @@ import {
   CloudUploadOutline,
   Key,
   AtCircleSharp,
-  Document
+  Document,
+  ChevronDown
 } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
 import { useStorage } from '@vueuse/core'
@@ -130,6 +131,24 @@ const onUserSelect = (key: string) => {
 }
 let assistantCount = 0
 const answerLoading = ref(false)
+const pageLinkElement = ref<HTMLElement>()
+const pageLinkElementIsVisible = ref(false)
+
+const { stop } = useIntersectionObserver(
+  pageLinkElement,
+  ([{ isIntersecting }]) => {
+    pageLinkElementIsVisible.value = isIntersecting
+  }
+)
+
+function scrollToBottom() {
+  console.log('trigger scrollToBottom')
+  pageLinkElement.value?.scrollIntoView({
+    block: 'end',
+    inline: 'nearest',
+    behavior: 'smooth'
+  })
+}
 
 type SimilarityDocument = {
   pageContent: string
@@ -166,9 +185,8 @@ async function submitHandler(e: Event) {
   } catch (error: unknown) {
     const { message: errorMessage } = error as NuxtError
     message.error(errorMessage)
-  } finally {
+    answerLoading.value = false
   }
-  answerLoading.value = false
 }
 
 watch(useChatLoading, (v) => {
@@ -188,6 +206,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   pdfSrc.value && URL.revokeObjectURL(pdfSrc.value)
+  stop()
 })
 
 const viewerRef = ref()
@@ -216,6 +235,7 @@ function setPage(p: number) {
         <div
           class="sticky top-0 py-4 px-4 z-10 bg-white flex justify-end items-center"
         >
+          <span @click="scrollToBottom">click me</span>
           <n-button
             v-if="user"
             quaternary
@@ -299,8 +319,9 @@ function setPage(p: number) {
           </div>
         </div>
         <div
-          v-show="!useChatLoading && relatedPagesSet.size !== 0"
-          class="w-3/5 mx-auto"
+          ref="pageLinkElement"
+          v-show="!answerLoading && relatedPagesSet.size !== 0"
+          class="w-3/5 mx-auto pb-10"
         >
           <span
             v-for="(page, index) of relatedPagesSet"
@@ -312,7 +333,7 @@ function setPage(p: number) {
           >
         </div>
       </div>
-      <div class="h-12 pt-2">
+      <div class="h-12 pt-2 relative">
         <n-form class="w-5/6 max-w-2xl mx-auto" @submit.prevent="submitHandler">
           <n-input-group>
             <n-input
@@ -332,6 +353,20 @@ function setPage(p: number) {
             </n-button>
           </n-input-group>
         </n-form>
+        <n-button
+          v-show="
+            messages.length && !answerLoading && !pageLinkElementIsVisible
+          "
+          size="small"
+          circle
+          class="absolute -top-8 left-1/2 -translate-x-1/2"
+          @click="scrollToBottom"
+          style="background-color: white"
+        >
+          <template #icon>
+            <n-icon><ChevronDown /></n-icon>
+          </template>
+        </n-button>
       </div>
       <div class="text-center text-stone-400 py-1">cjboy76 © 2024</div>
     </div>

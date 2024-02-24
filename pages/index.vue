@@ -71,7 +71,7 @@ async function uploadPdfHandler() {
 
   if (idsDB.value.length) {
     await $fetch('/api/deleteVector', {
-      method: 'delete',
+      method: 'post',
       body: {
         ids: idsDB.value
       }
@@ -106,7 +106,7 @@ async function uploadPdfHandler() {
     const pdfBlob = new Blob([file.file!], { type: 'application/pdf' })
     pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
-    message.error(error as string)
+    message.error((error as any).message)
   } finally {
     fileUploading.value = false
   }

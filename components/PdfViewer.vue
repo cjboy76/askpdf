@@ -122,7 +122,11 @@ function pageNumTextHandler() {
 
 watch(
   () => props.pdfSrc,
-  (value) => value && pdfViewer.setPdfSrc(value)
+  async (value) => {
+    if (!value) return
+    const pdfDoc = await pdfViewer.setPdfSrc(value)
+    pages.value = pdfDoc ? pdfDoc.numPages : 0
+  }
 )
 
 onMounted(() => (pdfViewer = new PDFViewer(document.querySelector('#canvas'))))

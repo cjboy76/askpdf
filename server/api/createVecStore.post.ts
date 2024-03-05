@@ -1,33 +1,38 @@
 import { Document } from '@langchain/core/documents'
 import { usePinecone } from '../utils'
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 
 type CreateDocumentBody = {
   data: { page: number; textContent: string }[]
   pdf_name: string
   user_sub: string
 }
+const splitter = new RecursiveCharacterTextSplitter({
+  chunkSize: 300,
+  chunkOverlap: 15
+})
 
 export default defineEventHandler(async (event) => {
   try {
-    const { data, pdf_name, user_sub } = await readBody<CreateDocumentBody>(
-      event
+    const { data } = await readBody<CreateDocumentBody>(event)
+
+    const docPromise = data.map((d) => {
+      return new Promise<Document<Record<string, any>>[]>(async (resolve) => {
+        const fragments = await splitter.createDocuments([d.textContent])
+        fragments.forEach((f) => {
+          f.metadata.page = d.page
+        })
+        resolve(fragments)
+      })
+    })
+
+    const documents = (await Promise.all(docPromise)).reduce(
+      (prev, promiseDocument) => {
+        return [...prev, ...promiseDocument]
+      },
+      []
     )
-
-    const docs = data
-      .reduce((a, b) => {
-        const subPageText = b.textContent.split('.').map(
-          (t) =>
-            new Document({
-              pageContent: t,
-              metadata: { page: b.page, user_sub, pdf_name }
-            })
-        )
-        return [...a, ...subPageText]
-      }, [] as { pageContent: string; metadata: Record<string, any> }[])
-      .filter((item) => Boolean(item.pageContent))
-
-    const ids = await usePinecone(event).addDocuments(docs)
-
+    const ids = await usePinecone(event).addDocuments(documents)
     return ids
   } catch (error) {
     throw createError({

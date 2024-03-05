@@ -92,9 +92,7 @@ async function uploadPdfHandler() {
     const ids = await $fetch('/api/createVecStore', {
       method: 'post',
       body: {
-        data: pdfInfo.data,
-        pdf_name: pdfInfo.name,
-        user_sub: user.value.sub
+        data: pdfInfo.data
       },
       headers: {
         'x-openai-key': storageOpenAIKey.value

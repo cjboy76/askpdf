@@ -5,21 +5,11 @@ import {
   NDialogProvider,
   type GlobalThemeOverrides
 } from 'naive-ui'
-
-const primaryColor = '#4c6983'
-
-const themeOverrides: GlobalThemeOverrides = {
-  common: {
-    primaryColor: primaryColor
-  },
-  Input: {
-    borderFocus: primaryColor,
-    borderHover: primaryColor
-  }
-}
+import { darkTheme } from 'naive-ui'
 </script>
+
 <template>
-  <n-config-provider :theme-overrides="themeOverrides">
+  <n-config-provider :theme="darkTheme">
     <n-dialog-provider>
       <n-message-provider>
         <NuxtLayout>

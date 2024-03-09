@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-hidden h-full">
-    <div class="flex justify-between items-center py-1 bg-white">
+    <div class="flex justify-between items-center py-1 bg-zinc-800">
       <div class="flex justify-center items-center">
         <n-button
           size="small"
@@ -61,7 +61,7 @@
         </n-button>
       </div>
     </div>
-    <div class="grid place-items-center overflow-hidden h-full">
+    <div class="grid place-items-center overflow-hidden h-full bg-zinc-700">
       <canvas ref="canvas" id="canvas"></canvas>
     </div>
   </div>

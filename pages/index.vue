@@ -259,8 +259,8 @@ function handleRemoveDocumentConfirm() {
 </script>
 
 <template>
-  <div class="h-screen grid grid-cols-6">
-    <div class="col-span-3 bg-gray-100 h-full flex flex-col flex-grow relative">
+  <div class="h-screen grid grid-cols-6 bg-zinc-800 color-zinc-100">
+    <div class="col-span-3 h-full flex flex-col flex-grow relative">
       <client-only fallback-tag="span" fallback="Loading comments...">
         <PdfViewer v-if="user" ref="viewerRef" :pdfSrc="pdfSrc" />
         <div
@@ -276,7 +276,7 @@ function handleRemoveDocumentConfirm() {
         class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow"
       >
         <div
-          class="sticky top-0 py-4 px-4 z-10 bg-white flex justify-end items-center"
+          class="sticky top-0 py-4 px-4 z-10 flex justify-end items-center bg-zinc-800"
         >
           <n-button
             v-if="user"
@@ -413,16 +413,16 @@ function handleRemoveDocumentConfirm() {
           v-show="!pageLinkElementIsVisible"
           size="small"
           circle
-          class="absolute -top-8 left-1/2 -translate-x-1/2"
+          class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100"
           @click="scrollToBottom"
-          style="background-color: white"
+          style="background-color: black"
         >
           <template #icon>
             <n-icon><ChevronDown /></n-icon>
           </template>
         </n-button>
       </div>
-      <div class="text-center text-stone-400 py-1">cjboy76 © 2024</div>
+      <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
     </div>
   </div>
   <n-modal v-model:show="showFileModal">

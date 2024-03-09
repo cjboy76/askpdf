@@ -9,7 +9,7 @@ import {
   NUploadDragger,
   NText,
   NP,
-  NSkeleton,
+  NSpin,
   NAvatar,
   NDropdown,
   NInputGroup,
@@ -28,7 +28,7 @@ import {
 } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
 import { useStorage } from '@vueuse/core'
-import { useChat } from 'ai/vue'
+import { useChat, type Message } from 'ai/vue'
 import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { pdfToBase64 } from '~/utils/parser'
@@ -65,6 +65,11 @@ function uploadPdfCanceller() {
 const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
 const { data: idsDB } = useIDBKeyval<string[]>('askpdf-ids', [])
+const { data: messagesDB } = useIDBKeyval<Message[]>('askpdf-msg', [])
+
+watch(messages, (newValue) => {
+  messagesDB.value = newValue
+})
 
 async function uploadPdf() {
   const file = toRaw(uploadFile.value[0])
@@ -73,7 +78,7 @@ async function uploadPdf() {
   fileUploading.value = true
 
   if (idsDB.value.length) {
-    await removePdf()
+    await deletePdfData()
   }
 
   try {
@@ -101,20 +106,26 @@ async function uploadPdf() {
     const pdfBlob = new Blob([file.file!], { type: 'application/pdf' })
     pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
-    message.error((error as any).message)
+    message.error((error as any).data.message)
   } finally {
     fileUploading.value = false
   }
 }
 
-function removePdf() {
-  fileDB.value = ''
-  return $fetch('/api/deleteVector', {
+async function deletePdfData() {
+  await $fetch('/api/deleteVector', {
     method: 'post',
     body: {
       ids: idsDB.value
+    },
+    headers: {
+      'x-openai-key': storageOpenAIKey.value
     }
   })
+  fileDB.value = ''
+  idsDB.value = []
+  pdfSrc.value = ''
+  setMessages([])
 }
 
 const userDropOptions = [
@@ -161,10 +172,6 @@ type SimilarityDocument = {
 
 async function submitHandler(e: Event) {
   if (!input.value || answerLoading.value) return
-  if (!storageOpenAIKey.value) {
-    showKeyModal.value = true
-    return
-  }
   answerLoading.value = true
   try {
     const similarityDocs = await $fetch('/api/queryVector', {
@@ -200,12 +207,18 @@ watch(useChatLoading, (v) => {
 })
 
 const pdfSrc = ref('')
-onMounted(async () => {
+
+async function initAppState() {
   const pdfFromStore = await get('askpdf-file')
   if (pdfFromStore) {
     const file = base64ToPdf(pdfFromStore)
     pdfSrc.value = URL.createObjectURL(file)
   }
+  const msgFromStore = await get('askpdf-msg')
+  if (msgFromStore) setMessages(msgFromStore)
+}
+onMounted(() => {
+  initAppState()
 })
 
 onUnmounted(() => {
@@ -228,7 +241,7 @@ function handleRemoveDocumentConfirm() {
     positiveText: '確定',
     negativeText: '先不要',
     onPositiveClick: async () => {
-      await removePdf()
+      await deletePdfData()
       message.success('文件已刪除')
     },
     onNegativeClick: () => {
@@ -310,7 +323,7 @@ function handleRemoveDocumentConfirm() {
             </n-dropdown>
           </client-only>
         </div>
-        <div v-if="messages.length === 0" class="text-center mt-20">
+        <div v-if="idsDB.length === 0 && !fileDB" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
           <h3 v-if="loggedIn" class="font-bold text-center mb-4 opacity-50">
             上傳文件，開始體驗
@@ -319,9 +332,11 @@ function handleRemoveDocumentConfirm() {
             <n-button> 登入 Google </n-button>
           </a>
         </div>
-        <div v-show="fileUploading" class="w-4/5 mx-auto">
-          <n-skeleton text :repeat="2" />
-          <n-skeleton text style="width: 80%; margin: 0 auto" />
+        <div
+          v-show="fileUploading"
+          class="w-4/5 mx-auto grid place-items-center"
+        >
+          <n-spin size="medium" />
         </div>
         <div
           v-for="{ content, role, id } of messages"
@@ -381,7 +396,7 @@ function handleRemoveDocumentConfirm() {
               attr-type="submit"
               size="large"
               :loading="answerLoading"
-              :disabled="!user || fileUploading"
+              :disabled="!user || fileUploading || idsDB.length === 0"
             >
               Enter
             </n-button>

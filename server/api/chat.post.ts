@@ -1,4 +1,4 @@
-import { ChatCompletionMessageParam } from 'openai/resources/chat'
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 import { OpenAIStream, StreamingTextResponse } from 'ai'
 import { useOpenAI } from '../utils'
 

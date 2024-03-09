@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   try {
     const result = await usePinecone(event).delete({ ids })
     return result
-  } catch (error: unknown) {
-    console.log(error)
+  } catch (error) {
+    throw createError((error as any).message)
   }
 })

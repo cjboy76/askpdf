@@ -35,9 +35,6 @@ export default defineEventHandler(async (event) => {
     const ids = await usePinecone(event).addDocuments(documents)
     return ids
   } catch (error) {
-    throw createError({
-      statusCode: (error as any).status,
-      statusMessage: (error as any).error.message
-    })
+    throw createError((error as any).message)
   }
 })

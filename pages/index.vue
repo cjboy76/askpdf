@@ -52,7 +52,7 @@ const uploadFile = ref<UploadFileInfo[]>([])
 const showFileModal = ref(false)
 const showKeyModal = ref(false)
 const message = useMessage()
-const relatedPagesSet = new Set<number>()
+// const relatedPagesSet = new Set<number>()
 
 const onChange: UploadProps['onChange'] = ({ file }) => {
   uploadFile.value.push(file)
@@ -66,6 +66,10 @@ const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
 const { data: idsDB } = useIDBKeyval<string[]>('askpdf-ids', [])
 const { data: messagesDB } = useIDBKeyval<Message[]>('askpdf-msg', [])
+const { data: relatedPagesSet } = useIDBKeyval<number[]>(
+  'askpdf-related-pages',
+  []
+)
 
 watch(messages, (newValue) => {
   messagesDB.value = newValue
@@ -181,11 +185,10 @@ async function submitHandler(e: Event) {
         'x-openai-key': storageOpenAIKey.value
       }
     })
-
-    relatedPagesSet.clear()
-    ;(similarityDocs as SimilarityDocument[])
+    const relatedPageNum = (similarityDocs as SimilarityDocument[])
       .sort((a, b) => a.metadata.page - b.metadata.page)
-      .forEach((s) => relatedPagesSet.add(s.metadata.page))
+      .map((p) => p.metadata.page)
+    relatedPagesSet.value = [...new Set(relatedPageNum)]
 
     const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
     setMessages([
@@ -216,6 +219,10 @@ async function initAppState() {
   }
   const msgFromStore = await get('askpdf-msg')
   if (msgFromStore) setMessages(msgFromStore)
+
+  const relatedPageNumFromStore = await get('askpdf-related-pages')
+  if (relatedPageNumFromStore.length > 0)
+    relatedPagesSet.value = relatedPageNumFromStore
 }
 onMounted(() => {
   initAppState()
@@ -236,13 +243,13 @@ const openRemoveDocumentDialog = ref(false)
 
 function handleRemoveDocumentConfirm() {
   dialog.warning({
-    title: '刪除文件',
-    content: '即將刪除 PDF 文件及分析資料',
+    title: '清除資料',
+    content: '即將刪除 PDF 文件、對話紀錄',
     positiveText: '確定',
     negativeText: '先不要',
     onPositiveClick: async () => {
       await deletePdfData()
-      message.success('文件已刪除')
+      message.success('資料已刪除')
     },
     onNegativeClick: () => {
       openRemoveDocumentDialog.value = false
@@ -278,7 +285,7 @@ function handleRemoveDocumentConfirm() {
             @click="handleRemoveDocumentConfirm"
             :disabled="!fileDB && idsDB.length === 0"
           >
-            刪除文件
+            清除資料
             <template #icon>
               <n-icon><Trash /></n-icon>
             </template>
@@ -369,7 +376,7 @@ function handleRemoveDocumentConfirm() {
         </div>
         <div
           ref="pageLinkElement"
-          v-show="!answerLoading && relatedPagesSet.size !== 0"
+          v-show="!answerLoading"
           class="w-3/5 mx-auto pb-10"
         >
           <span
@@ -403,9 +410,7 @@ function handleRemoveDocumentConfirm() {
           </n-input-group>
         </n-form>
         <n-button
-          v-show="
-            messages.length && !answerLoading && !pageLinkElementIsVisible
-          "
+          v-show="!pageLinkElementIsVisible"
           size="small"
           circle
           class="absolute -top-8 left-1/2 -translate-x-1/2"

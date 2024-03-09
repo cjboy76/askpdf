@@ -20,7 +20,7 @@ export default defineNuxtConfig({
     openaiApiKey: '',
     pineconeIndex: ''
   },
-  modules: ['@vueuse/nuxt', '@unocss/nuxt', '@pinia/nuxt', 'nuxt-auth-utils'],
+  modules: ['@vueuse/nuxt', '@unocss/nuxt', 'nuxt-auth-utils'],
   unocss: {
     presets: [presetUno()]
   },

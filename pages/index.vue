@@ -16,14 +16,15 @@ import {
   NForm,
   type UploadFileInfo,
   type UploadProps,
-  c
+  useDialog
 } from 'naive-ui'
 import {
   CloudUploadOutline,
   Key,
   AtCircleSharp,
   Document,
-  ChevronDown
+  ChevronDown,
+  Trash
 } from '@vicons/ionicons5'
 import { useMessage } from 'naive-ui'
 import { useStorage } from '@vueuse/core'
@@ -65,19 +66,14 @@ const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
 const { data: idsDB } = useIDBKeyval<string[]>('askpdf-ids', [])
 
-async function uploadPdfHandler() {
+async function uploadPdf() {
   const file = toRaw(uploadFile.value[0])
   uploadPdfCanceller()
   if (!file.file) return
   fileUploading.value = true
 
   if (idsDB.value.length) {
-    await $fetch('/api/deleteVector', {
-      method: 'post',
-      body: {
-        ids: idsDB.value
-      }
-    })
+    await removePdf()
   }
 
   try {
@@ -109,6 +105,16 @@ async function uploadPdfHandler() {
   } finally {
     fileUploading.value = false
   }
+}
+
+function removePdf() {
+  fileDB.value = ''
+  return $fetch('/api/deleteVector', {
+    method: 'post',
+    body: {
+      ids: idsDB.value
+    }
+  })
 }
 
 const userDropOptions = [
@@ -211,6 +217,25 @@ const viewerRef = ref()
 function setPage(p: number) {
   viewerRef.value.setPage(p)
 }
+
+const dialog = useDialog()
+const openRemoveDocumentDialog = ref(false)
+
+function handleRemoveDocumentConfirm() {
+  dialog.warning({
+    title: '刪除文件',
+    content: '即將刪除 PDF 文件及分析資料',
+    positiveText: '確定',
+    negativeText: '先不要',
+    onPositiveClick: async () => {
+      await removePdf()
+      message.success('文件已刪除')
+    },
+    onNegativeClick: () => {
+      openRemoveDocumentDialog.value = false
+    }
+  })
+}
 </script>
 
 <template>
@@ -233,6 +258,18 @@ function setPage(p: number) {
         <div
           class="sticky top-0 py-4 px-4 z-10 bg-white flex justify-end items-center"
         >
+          <n-button
+            v-if="user"
+            quaternary
+            class="mx-1"
+            @click="handleRemoveDocumentConfirm"
+            :disabled="!fileDB && idsDB.length === 0"
+          >
+            刪除文件
+            <template #icon>
+              <n-icon><Trash /></n-icon>
+            </template>
+          </n-button>
           <n-button
             v-if="user"
             quaternary
@@ -405,7 +442,7 @@ function setPage(p: number) {
           <n-button
             quaternary
             :disabled="uploadFile.length === 0"
-            @click="uploadPdfHandler"
+            @click="uploadPdf"
             >確認</n-button
           >
         </div>

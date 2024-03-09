@@ -2,6 +2,7 @@
 import {
   NMessageProvider,
   NConfigProvider,
+  NDialogProvider,
   type GlobalThemeOverrides
 } from 'naive-ui'
 
@@ -19,11 +20,13 @@ const themeOverrides: GlobalThemeOverrides = {
 </script>
 <template>
   <n-config-provider :theme-overrides="themeOverrides">
-    <n-message-provider>
-      <NuxtLayout>
-        <NuxtPage />
-      </NuxtLayout>
-    </n-message-provider>
+    <n-dialog-provider>
+      <n-message-provider>
+        <NuxtLayout>
+          <NuxtPage />
+        </NuxtLayout>
+      </n-message-provider>
+    </n-dialog-provider>
   </n-config-provider>
 </template>
 <style>

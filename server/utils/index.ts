@@ -4,9 +4,8 @@ import { PineconeStore } from '@langchain/community/vectorstores/pinecone'
 import type { EventHandlerRequest, H3Event } from 'h3'
 import OpenAI from 'openai'
 
-let _pineconeStore: PineconeStore | null = null
-
 export function usePinecone(event: H3Event<EventHandlerRequest>) {
+  let _pineconeStore: PineconeStore | null = null
   const apiKey =
     process.env.NUXT_OPENAI_API_KEY ||
     event.node.req.headers['x-openai-key']?.toString() ||
@@ -31,7 +30,7 @@ export function usePinecone(event: H3Event<EventHandlerRequest>) {
 }
 
 export function useOpenAI(event: H3Event<EventHandlerRequest>) {
-  const apiKey =
+  let apiKey =
     process.env.NUXT_OPENAI_API_KEY ||
     event.node.req.headers['x-openai-key']?.toString()
   return new OpenAI({

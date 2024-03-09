@@ -1,7 +1,7 @@
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist'
 
 export class PDFViewer {
-  private pdfSrc: string
+  private pdfSrc: string | undefined
   public pdfDoc: PDFDocumentProxy | null
   public loadingTask: PDFDocumentLoadingTask | null
   public canvas: HTMLCanvasElement | null
@@ -57,7 +57,7 @@ export class PDFViewer {
     }
   }
 
-  setPdfSrc(value: string) {
+  setPdfSrc(value: string | undefined) {
     this.pdfSrc = value
     return this.loadPdf()
   }

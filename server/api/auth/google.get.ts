@@ -17,6 +17,6 @@ export default oauth.googleEventHandler({
   async onSuccess(event, { user }) {
     // @ts-expect-error package type issue
     await setUserSession(event, { user })
-    return sendRedirect(event, '/')
+    return sendRedirect(event, '/chat')
   }
 })

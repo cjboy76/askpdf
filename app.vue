@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  NMessageProvider,
-  NConfigProvider,
-  NDialogProvider,
-  type GlobalThemeOverrides
-} from 'naive-ui'
+import { NMessageProvider, NConfigProvider, NDialogProvider } from 'naive-ui'
 import { darkTheme } from 'naive-ui'
 </script>
 
@@ -13,7 +8,7 @@ import { darkTheme } from 'naive-ui'
     <n-dialog-provider>
       <n-message-provider>
         <NuxtLayout>
-          <NuxtPage />
+          <NuxtPage class="h-screen bg-zinc-800 color-zinc-100" />
         </NuxtLayout>
       </n-message-provider>
     </n-dialog-provider>

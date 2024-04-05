@@ -33,6 +33,7 @@ import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { pdfToBase64 } from '~/utils/parser'
 import { get } from 'idb-keyval'
+import { useVectorStore, createDocuments } from '#imports'
 
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
@@ -47,6 +48,8 @@ const {
     'x-openai-key': storageOpenAIKey.value
   }
 })
+
+const { store: vectorStore, restore } = useVectorStore(storageOpenAIKey.value)
 
 const uploadFile = ref<UploadFileInfo[]>([])
 const showFileModal = ref(false)
@@ -80,11 +83,6 @@ async function uploadPdf() {
   uploadPdfCanceller()
   if (!file.file) return
   fileUploading.value = true
-
-  if (idsDB.value.length) {
-    await deletePdfData()
-  }
-
   try {
     const formData = new FormData()
     formData.append('file', file.file!)
@@ -94,19 +92,10 @@ async function uploadPdf() {
       method: 'post',
       body: formData
     })
-    const ids = await $fetch('/api/createVecStore', {
-      method: 'post',
-      body: {
-        data: pdfInfo.data
-      },
-      headers: {
-        'x-openai-key': storageOpenAIKey.value
-      }
-    })
-    const base64File = await pdfToBase64(file.file as File)
-    idsDB.value = ids
-    fileDB.value = base64File
+    const documents = await createDocuments(pdfInfo.data)
 
+    vectorStore.addDocuments(documents)
+    fileDB.value = await pdfToBase64(file.file as File)
     const pdfBlob = new Blob([file.file!], { type: 'application/pdf' })
     pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
@@ -117,17 +106,8 @@ async function uploadPdf() {
 }
 
 async function deletePdfData() {
-  await $fetch('/api/deleteVector', {
-    method: 'post',
-    body: {
-      ids: idsDB.value
-    },
-    headers: {
-      'x-openai-key': storageOpenAIKey.value
-    }
-  })
+  await vectorStore.delete()
   fileDB.value = ''
-  idsDB.value = []
   pdfSrc.value = ''
   relatedPagesSet.value = []
   setMessages([])
@@ -171,23 +151,12 @@ function scrollToBottom() {
   })
 }
 
-type SimilarityDocument = {
-  pageContent: string
-  metadata: { page: number; user_sub: string; pdf_name: string }
-}
-
 async function submitHandler(e: Event) {
-  if (!input.value || answerLoading.value) return
-  answerLoading.value = true
   try {
-    const similarityDocs = await $fetch('/api/queryVector', {
-      method: 'post',
-      body: { input: input.value },
-      headers: {
-        'x-openai-key': storageOpenAIKey.value
-      }
-    })
-    const relatedPageNum = (similarityDocs as SimilarityDocument[])
+    if (!input.value || answerLoading.value) return
+    answerLoading.value = true
+    const similarityDocs = await vectorStore.similaritySearch(input.value, 5)
+    const relatedPageNum = similarityDocs
       .sort((a, b) => a.metadata.page - b.metadata.page)
       .map((p) => p.metadata.page)
     relatedPagesSet.value = [...new Set(relatedPageNum)]
@@ -284,7 +253,7 @@ function handleRemoveDocumentConfirm() {
             quaternary
             class="mx-1"
             @click="handleRemoveDocumentConfirm"
-            :disabled="!fileDB && idsDB.length === 0"
+            :disabled="!fileDB"
           >
             清除資料
             <template #icon>
@@ -331,7 +300,7 @@ function handleRemoveDocumentConfirm() {
             </n-dropdown>
           </client-only>
         </div>
-        <div v-if="idsDB.length === 0 && !fileDB" class="text-center mt-20">
+        <div v-if="!fileDB" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
           <h3 v-if="loggedIn" class="font-bold text-center mb-4 opacity-50">
             上傳文件，開始體驗
@@ -401,7 +370,7 @@ function handleRemoveDocumentConfirm() {
               attr-type="submit"
               size="large"
               :loading="answerLoading"
-              :disabled="!user || fileUploading || idsDB.length === 0"
+              :disabled="!user || fileUploading"
             >
               Enter
             </n-button>
@@ -480,6 +449,7 @@ function handleRemoveDocumentConfirm() {
           show-password-on="mousedown"
           placeholder="貼上 OpenAI API Key"
           v-model:value="storageOpenAIKey"
+          @change="restore(storageOpenAIKey)"
         />
         <template #footer>
           <div class="flex justify-end">

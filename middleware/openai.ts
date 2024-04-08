@@ -1,9 +1,6 @@
 export default defineEventHandler((event) => {
   const protectedPath = [
     '/api/chat',
-    '/api/createVecStore',
-    '/api/deleteVector',
-    '/api/queryVector'
   ]
 
   if (protectedPath.includes(getRequestURL(event).pathname)) {

@@ -33,8 +33,9 @@ import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { pdfToBase64 } from '~/utils/parser'
 import { get } from 'idb-keyval'
-import { useVectorStore, createDocuments, CustomVectorStore } from '#imports'
+import { createDocuments, CustomVectorStore } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
+import { useVectorStore } from '~/utils/vectorStore'
 
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
@@ -45,9 +46,6 @@ const {
   input,
   isLoading: useChatLoading
 } = useChat({
-  headers: {
-    'x-openai-key': storageOpenAIKey.value
-  },
   onError: (error) => message.error(error.message)
 })
 
@@ -68,7 +66,10 @@ function uploadPdfCanceller() {
 }
 const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
-const { data: documentDB } = useIDBKeyval<TDocument<Record<string, any>>[]>('askpdf-docs', [])
+const { data: documentDB } = useIDBKeyval<TDocument<Record<string, any>>[]>(
+  'askpdf-docs',
+  []
+)
 const { data: messagesDB } = useIDBKeyval<Message[]>('askpdf-msg', [])
 const { data: relatedPagesSet } = useIDBKeyval<number[]>(
   'askpdf-related-pages',
@@ -111,7 +112,7 @@ async function uploadPdf() {
 }
 
 async function deletePdfData() {
-  if (vectorStore) await vectorStore.delete()
+  if (vectorStore && vectorStore.embeddings) await vectorStore.delete()
   fileDB.value = ''
   pdfSrc.value = ''
   relatedPagesSet.value = []
@@ -135,7 +136,6 @@ const onUserSelect = (key: string) => {
     navigateTo('/')
   }
 }
-let assistantCount = 0
 const answerLoading = ref(false)
 const pageLinkElement = ref<HTMLElement>()
 const pageLinkElementIsVisible = ref(false)
@@ -169,9 +169,15 @@ async function submitHandler(e: Event) {
     const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
     setMessages([
       ...messages.value,
-      { id: `${assistantCount++}`, role: 'system', content: systemPrompt }
+      { id: `${new Date().toISOString()}`, role: 'system', content: systemPrompt }
     ])
-    handleSubmit(e)
+    handleSubmit(e, {
+      options: {
+        headers: {
+          'x-openai-key': storageOpenAIKey.value
+        }
+      }
+    })
   } catch (error: unknown) {
     const { message: errorMessage } = error as NuxtError
     message.error(errorMessage)

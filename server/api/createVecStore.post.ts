@@ -1,5 +1,4 @@
 import { Document } from '@langchain/core/documents'
-import { usePinecone } from '../utils'
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 
 type CreateDocumentBody = {

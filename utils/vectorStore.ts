@@ -115,7 +115,7 @@ export class CustomVectorStore extends VectorStore {
 
 let _vector_store: CustomVectorStore
 
-export function useVectorStore(openAIApiKey = '') {
+export function useVectorStore(openAIApiKey: string) {
   if (!_vector_store) {
     _vector_store = new CustomVectorStore(
       new OpenAIEmbeddings({
@@ -124,18 +124,7 @@ export function useVectorStore(openAIApiKey = '') {
     )
   }
 
-  return {
-    store: _vector_store,
-    restore: (key: string) => {
-      _vector_store = new CustomVectorStore(
-        new OpenAIEmbeddings({
-          openAIApiKey: key
-        })
-      )
-
-      return _vector_store
-    }
-  }
+  return _vector_store
 }
 
 const splitter = new RecursiveCharacterTextSplitter({

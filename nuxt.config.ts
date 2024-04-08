@@ -17,8 +17,7 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
-    openaiApiKey: '',
-    pineconeIndex: ''
+    openaiApiKey: ''
   },
   modules: ['@vueuse/nuxt', '@unocss/nuxt', 'nuxt-auth-utils'],
   unocss: {

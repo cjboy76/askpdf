@@ -33,7 +33,8 @@ import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { pdfToBase64 } from '~/utils/parser'
 import { get } from 'idb-keyval'
-import { useVectorStore, createDocuments } from '#imports'
+import { useVectorStore, createDocuments, CustomVectorStore } from '#imports'
+import type { Document as TDocument } from '@langchain/core/documents'
 
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
@@ -46,16 +47,16 @@ const {
 } = useChat({
   headers: {
     'x-openai-key': storageOpenAIKey.value
-  }
+  },
+  onError: (error) => message.error(error.message)
 })
 
-const { store: vectorStore, restore } = useVectorStore(storageOpenAIKey.value)
+let vectorStore: CustomVectorStore
 
 const uploadFile = ref<UploadFileInfo[]>([])
 const showFileModal = ref(false)
 const showKeyModal = ref(false)
 const message = useMessage()
-// const relatedPagesSet = new Set<number>()
 
 const onChange: UploadProps['onChange'] = ({ file }) => {
   uploadFile.value.push(file)
@@ -67,7 +68,7 @@ function uploadPdfCanceller() {
 }
 const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
-const { data: idsDB } = useIDBKeyval<string[]>('askpdf-ids', [])
+const { data: documentDB } = useIDBKeyval<TDocument<Record<string, any>>[]>('askpdf-docs', [])
 const { data: messagesDB } = useIDBKeyval<Message[]>('askpdf-msg', [])
 const { data: relatedPagesSet } = useIDBKeyval<number[]>(
   'askpdf-related-pages',
@@ -79,6 +80,10 @@ watch(messages, (newValue) => {
 })
 
 async function uploadPdf() {
+  if (!storageOpenAIKey.value) {
+    message.info('請設定 OpenAI API Key')
+    return
+  }
   const file = toRaw(uploadFile.value[0])
   uploadPdfCanceller()
   if (!file.file) return
@@ -93,7 +98,7 @@ async function uploadPdf() {
       body: formData
     })
     const documents = await createDocuments(pdfInfo.data)
-
+    documentDB.value = documents
     vectorStore.addDocuments(documents)
     fileDB.value = await pdfToBase64(file.file as File)
     const pdfBlob = new Blob([file.file!], { type: 'application/pdf' })
@@ -106,7 +111,7 @@ async function uploadPdf() {
 }
 
 async function deletePdfData() {
-  await vectorStore.delete()
+  if (vectorStore) await vectorStore.delete()
   fileDB.value = ''
   pdfSrc.value = ''
   relatedPagesSet.value = []
@@ -182,7 +187,7 @@ watch(useChatLoading, (v) => {
 
 const pdfSrc = ref('')
 
-async function initAppState() {
+async function refreshFromCache() {
   const pdfFromStore = await get('askpdf-file')
   if (pdfFromStore) {
     const file = base64ToPdf(pdfFromStore)
@@ -191,12 +196,21 @@ async function initAppState() {
   const msgFromStore = await get('askpdf-msg')
   if (msgFromStore) setMessages(msgFromStore)
 
+  const docsFromStore = await get('askpdf-docs')
+  if (docsFromStore && storageOpenAIKey.value) {
+    vectorStore = useVectorStore(storageOpenAIKey.value)
+    vectorStore.addDocuments(docsFromStore)
+  }
+
   const relatedPageNumFromStore = await get('askpdf-related-pages')
   if (relatedPageNumFromStore.length > 0)
     relatedPagesSet.value = relatedPageNumFromStore
 }
 onMounted(() => {
-  initAppState()
+  if (storageOpenAIKey.value) {
+    vectorStore = useVectorStore(storageOpenAIKey.value)
+  }
+  refreshFromCache()
 })
 
 onUnmounted(() => {
@@ -211,7 +225,7 @@ function setPage(p: number) {
 
 const dialog = useDialog()
 
-function handleRemoveDocumentConfirm() {
+function removeData() {
   dialog.warning({
     style: 'color: white',
     autoFocus: false,
@@ -225,6 +239,12 @@ function handleRemoveDocumentConfirm() {
       message.success('資料已刪除')
     }
   })
+}
+
+async function refreshStore(key: string) {
+  vectorStore = useVectorStore(key)
+  if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
+  message.info('OpenAI API key 已更新')
 }
 </script>
 
@@ -252,7 +272,7 @@ function handleRemoveDocumentConfirm() {
             v-if="user"
             quaternary
             class="mx-1"
-            @click="handleRemoveDocumentConfirm"
+            @click="removeData"
             :disabled="!fileDB"
           >
             清除資料
@@ -449,7 +469,7 @@ function handleRemoveDocumentConfirm() {
           show-password-on="mousedown"
           placeholder="貼上 OpenAI API Key"
           v-model:value="storageOpenAIKey"
-          @change="restore(storageOpenAIKey)"
+          @change="refreshStore(storageOpenAIKey)"
         />
         <template #footer>
           <div class="flex justify-end">

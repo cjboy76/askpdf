@@ -24,7 +24,9 @@ export default defineEventHandler(async (event) => {
 })
 
 async function loadPdf(url: string | ArrayBuffer) {
-  const loadingTask = pdfjsLib.getDocument(url)
+  // Issue: https://github.com/dictadata/pdf-data-parser/issues/1#issuecomment-2065503342
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");     
+  const loadingTask = getDocument(url)
   return loadingTask.promise.then((pdfDocument) => pdfDocument)
 }
 

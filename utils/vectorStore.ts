@@ -84,6 +84,10 @@ export class CustomVectorStore extends VectorStore {
     return result
   }
 
+  async delete() {
+    this.memoryVectors = []
+  }
+
   static async fromTexts(
     texts: string[],
     metadatas: object[] | object,

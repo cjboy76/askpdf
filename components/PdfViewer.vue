@@ -123,6 +123,7 @@ function pageNumTextHandler() {
 watch(
   () => props.pdfSrc,
   async (value) => {
+    console.log("trigger watcher")
     const pdfDoc = await pdfViewer.setPdfSrc(value)
     pages.value = pdfDoc ? pdfDoc.numPages : 0
   }

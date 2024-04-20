@@ -116,6 +116,7 @@ async function deletePdfData() {
   fileDB.value = ''
   pdfSrc.value = ''
   relatedPagesSet.value = []
+  documentDB.value = []
   setMessages([])
 }
 

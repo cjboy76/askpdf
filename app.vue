@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { NMessageProvider, NConfigProvider, NDialogProvider } from 'naive-ui'
-import { darkTheme } from 'naive-ui'
+import * as pkg from 'naive-ui';
+const { NConfigProvider, darkTheme, NDialogProvider, NMessageProvider } = pkg;
 </script>
 
 <template>

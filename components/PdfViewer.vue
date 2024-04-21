@@ -98,7 +98,6 @@ function togglePageHandler(direction: number) {
     return
   }
   pageNumText.value = String(pageNum.value)
-  console.log("togglePageHandler", pageNum.value)
   pdfViewer.setPage(pageNum.value)
 }
 
@@ -110,7 +109,6 @@ function setPage(num: number) {
 
 const inputPageText = ref()
 function pageNumTextHandler() {
-  console.log("triggger")
   const num = Number(pageNumText.value)
   if (!num || num < 1 || num > pdfViewer.numPage()) {
     pageNumText.value = ''
@@ -118,7 +116,6 @@ function pageNumTextHandler() {
   }
   pageNum.value = num
   inputPageText.value && inputPageText.value.blur()
-  console.log("first ", pageNum.value)
   pdfViewer.setPage(pageNum.value)
 }
 

@@ -16,9 +16,6 @@ export default defineNuxtConfig({
       }
     }
   },
-  runtimeConfig: {
-    openaiApiKey: ''
-  },
   modules: ['@vueuse/nuxt', '@unocss/nuxt', 'nuxt-auth-utils'],
   unocss: {
     presets: [presetUno()]

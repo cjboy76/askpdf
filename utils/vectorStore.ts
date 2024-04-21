@@ -123,7 +123,7 @@ export function useVectorStore(openAIApiKey: string) {
   if (!_vector_store) {
     _vector_store = new CustomVectorStore(
       new OpenAIEmbeddings({
-        openAIApiKey: process.env.NUXT_OPENAI_API_KEY || openAIApiKey
+        openAIApiKey
       })
     )
   }

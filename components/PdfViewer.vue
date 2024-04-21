@@ -1,6 +1,6 @@
 <template>
   <div class="overflow-hidden h-full">
-    <div class="flex justify-between items-center py-1 bg-zinc-800">
+    <div class="flex justify-between items-center py-1 bg-zinc-800 h-8">
       <div class="flex justify-center items-center">
         <n-button
           size="small"
@@ -61,14 +61,14 @@
         </n-button>
       </div>
     </div>
-    <div class="grid place-items-center overflow-hidden h-full bg-zinc-700">
-      <canvas ref="canvas" id="canvas"></canvas>
+    <div id="main-container" class="absolute w-full h-[calc(100vh-32px)] grid place-items-center bg-zinc-700">
+        <div id="viewer-container" class="grid place-items-center"></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { NInput, NButton, NIcon } from 'naive-ui'
 import {
   ChevronUp,
@@ -76,17 +76,16 @@ import {
   AddOutline,
   RemoveOutline
 } from '@vicons/ionicons5'
-import { PDFViewer } from '#imports'
+import { CustomPDFViewer } from '#imports'
 
 const props = defineProps({
   pdfSrc: String
 })
-const canvas = ref<HTMLCanvasElement | null>()
 const pageNum = ref(1)
 const pages = ref(0)
 const pageNumText = ref('1')
 
-let pdfViewer: PDFViewer
+let pdfViewer: CustomPDFViewer
 
 function togglePageHandler(direction: number) {
   pageNum.value += direction
@@ -94,46 +93,44 @@ function togglePageHandler(direction: number) {
     pageNum.value = 1
     return
   }
-  if (pageNum.value > pdfViewer.pdfDoc!.numPages) {
-    pageNum.value = pdfViewer.pdfDoc!.numPages
+  if (pageNum.value > pdfViewer.numPages()) {
+    pageNum.value = pdfViewer.numPages()
     return
   }
   pageNumText.value = String(pageNum.value)
-  pdfViewer.renderPage(pageNum.value)
+  console.log("togglePageHandler", pageNum.value)
+  pdfViewer.setPage(pageNum.value)
 }
 
 function setPage(num: number) {
   pageNum.value = num
   pageNumText.value = num.toString()
-  pdfViewer.renderPage(num)
+  pdfViewer.setPage(num)
 }
 
 const inputPageText = ref()
 function pageNumTextHandler() {
+  console.log("triggger")
   const num = Number(pageNumText.value)
-  if (!num || num < 1 || num > pdfViewer.pdfDoc!.numPages) {
+  if (!num || num < 1 || num > pdfViewer.numPage()) {
     pageNumText.value = ''
     return
   }
   pageNum.value = num
   inputPageText.value && inputPageText.value.blur()
-  pdfViewer.renderPage(pageNum.value)
+  console.log("first ", pageNum.value)
+  pdfViewer.setPage(pageNum.value)
 }
 
 watch(
   () => props.pdfSrc,
-  async (value) => {
-    console.log("trigger watcher")
-    const pdfDoc = await pdfViewer.setPdfSrc(value)
-    pages.value = pdfDoc ? pdfDoc.numPages : 0
+  async (value = '') => {
+    await pdfViewer.setPdf(value)
+    pages.value = pdfViewer.numPages()
   }
 )
 
-onMounted(() => (pdfViewer = new PDFViewer(document.querySelector('#canvas'))))
-
-onUnmounted(() => {
-  if (pdfViewer.loadingTask) pdfViewer.destroyLoadingTask()
-})
+onMounted(() => (pdfViewer = new CustomPDFViewer()))
 
 defineExpose({
   setPage

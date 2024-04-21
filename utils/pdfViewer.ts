@@ -1,68 +1,58 @@
-import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist'
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
+import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer';
 
-export class PDFViewer {
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString()
+
+export class CustomPDFViewer {
   private pdfSrc: string | undefined
-  public pdfDoc: PDFDocumentProxy | null
-  public loadingTask: PDFDocumentLoadingTask | null
-  public canvas: HTMLCanvasElement | null
+  private PDFViewer!: PDFViewer
+  private PDFDocument: pdfjs.PDFDocumentProxy | null
 
-  constructor(canvas: HTMLCanvasElement | null) {
+  constructor() {
     this.pdfSrc = ''
-    this.loadingTask = null
-    this.pdfDoc = null
-    this.canvas = canvas ? canvas : document.querySelector('canvas')
+    this.PDFDocument = null
+    this.setupinstance()
   }
 
-  async renderPage(number: number) {
-    if (!this.pdfDoc) return
-    this.pdfDoc.getPage(number).then((page) => {
-      const viewport = page.getViewport({ scale: 0.8 })
-      const context = this.canvas!.getContext('2d')
-
-      let resolution = 2 // for example
-
-      this.canvas!.height = resolution * viewport.height //actual size
-      this.canvas!.width = resolution * viewport.width
-
-      this.canvas!.style.height = viewport.height + 'px' //showing size will be smaller size
-      this.canvas!.style.width = viewport.width + 'px'
-
-      // Prepare object needed by render method
-      var renderContext = {
-        canvasContext: context!,
-        viewport: viewport,
-        transform: [resolution, 0, 0, resolution, 0, 0] // force it bigger size
-      }
-
-      // Render PDF page
-      page.render(renderContext)
-    })
-  }
-
-  async loadPdf() {
-    try {
-      const PDFJSLib = await import('pdfjs-dist')
-
-      PDFJSLib.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
-        import.meta.url
-      ).toString()
-
-      this.loadingTask = PDFJSLib.getDocument({ url: this.pdfSrc })
-      const _pdfDoc = await this.loadingTask.promise
-      this.pdfDoc = _pdfDoc
-      this.renderPage(1)
-    } finally {
-      return this.pdfDoc
+  async setPdf(src: string) {
+    if (!src) {
+      this.PDFViewer._resetView()
+      return
     }
+    this.pdfSrc = src
+    const PDFDocument = await pdfjs.getDocument(this.pdfSrc).promise.then((PDFDocument) => PDFDocument)
+    this.PDFViewer.setDocument(PDFDocument)
+    this.PDFDocument = PDFDocument
+    return PDFDocument
   }
 
-  setPdfSrc(value: string | undefined) {
-    this.pdfSrc = value
-    return this.loadPdf()
+  setPage(pageNumber: number) {
+    this.PDFViewer.currentPageNumber = pageNumber
   }
 
-  destroyLoadingTask() {
-    if (this.loadingTask) this.loadingTask.destroy()
+  numPage() {
+    return this.PDFViewer.currentPageNumber || 0
+  }
+
+  numPages() {
+    return this.PDFDocument ? this.PDFDocument.numPages : 0
+  }
+
+  async setupinstance() {
+    const { EventBus, PDFSinglePageViewer } = await import('pdfjs-dist/legacy/web/pdf_viewer.mjs');
+    const eventBus = new EventBus()
+    this.PDFViewer = new PDFSinglePageViewer({
+      container: document.querySelector<HTMLDivElement>('#main-container')!,
+      viewer: document.querySelector<HTMLDivElement>('#viewer-container')!,
+      eventBus,
+      textLayerMode: 0,
+      annotationMode: 0
+    })
+    eventBus.on("pagesinit",  () =>  {
+      this.PDFViewer.currentScaleValue = "page-fit";
+    });
   }
 }

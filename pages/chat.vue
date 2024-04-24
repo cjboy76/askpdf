@@ -17,6 +17,7 @@ import PrimeAvatar from 'primevue/avatar'
 import PrimeProgressSpinner from 'primevue/progressspinner'
 import PrimeFileUpload, { type FileUploadSelectEvent } from 'primevue/fileupload'
 import ConfirmDialog from 'primevue/confirmdialog';
+import Toast from 'primevue/toast';
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -439,6 +440,7 @@ function toggleMenu(e: Event) {
       </div>
     </PrimeDialog>
     <ConfirmDialog />
+    <Toast />
   </div>
 </template>
 

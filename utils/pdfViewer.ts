@@ -1,4 +1,4 @@
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.js'
 import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer';
 
 pdfjs.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'

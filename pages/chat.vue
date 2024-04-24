@@ -99,7 +99,7 @@ async function uploadPdf() {
     toast.add({
       severity: 'error',
       summary: 'Error Message',
-      detail: (error as any).data.message,
+      detail: '上傳檔案失敗，請確認檔案類型',
       life: 3000
     })
   } finally {

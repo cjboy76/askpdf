@@ -114,8 +114,8 @@ async function deletePdfData() {
 const userDropOptions = [
   {
     label: '登出',
-    command: () => {
-      clear()
+    command: async () => {
+      await clear()
       navigateTo('/')
     }
   }

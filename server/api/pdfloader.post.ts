@@ -25,8 +25,9 @@ export default defineEventHandler(async (event) => {
 
 async function loadPdf(url: string | ArrayBuffer) {
   // Issue: https://github.com/dictadata/pdf-data-parser/issues/1#issuecomment-2065503342
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");     
-  const loadingTask = getDocument(url)
+  const legacyPdfJsLib = await import("pdfjs-dist/legacy/build/pdf.mjs"); 
+  legacyPdfJsLib.GlobalWorkerOptions.workerSrc = '//unpkg.com/pdfjs-dist@4.0.189/build/pdf.worker.min.js' 
+  const loadingTask = legacyPdfJsLib.getDocument(url)
   return loadingTask.promise.then((pdfDocument) => pdfDocument)
 }
 

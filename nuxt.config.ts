@@ -2,7 +2,7 @@
 import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
-  devtools: { enabled: import.meta.dev },
+  devtools: { enabled: process.env.NODE_ENV === 'development' },
   ssr: true,
   app: {
     head: {

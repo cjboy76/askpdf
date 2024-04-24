@@ -338,13 +338,13 @@ function toggleMenu(e: Event) {
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-end">
               <PrimeAvatar
-                v-show="role === 'user'"
+                v-if="role === 'user'"
                 class="w-8 h-8"
                 round
-                :src="user.picture"
+                :image="user.picture"
               />
               <PrimeAvatar
-                v-show="role === 'assistant'"
+                v-if="role === 'assistant'"
                 class="w-8 h-8"
                 round
                 icon="pi pi-user"
@@ -376,21 +376,22 @@ function toggleMenu(e: Event) {
         </div>
       </div>
       <div class="h-12 pt-2 relative">
-        <div
+        <form
           class="w-5/6 max-w-2xl mx-auto flex"
           @submit.prevent="submitHandler"
         >
           <PrimeInputText
             class="flex-grow"
             v-model="input"
-            placeholder="輸入訊息"
+            placeholder="Message..."
             :disabled="answerLoading || fileUploading"
           >
           </PrimeInputText>
-          <PrimeButton class="ml-2" :disabled="!user || fileUploading">
-            Enter
+          <PrimeButton text outlined class="ml-2" :disabled="!user || fileUploading">
+            <span v-show="answerLoading"><i class="pi pi-spin pi-spinner"></i></span>
+            <span v-show="!answerLoading">Enter</span>
           </PrimeButton>
-        </div>
+        </form>
         <PrimeButton
           v-show="!pageLinkElementIsVisible"
           size="small"

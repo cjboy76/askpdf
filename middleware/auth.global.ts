@@ -3,4 +3,7 @@ export default defineNuxtRouteMiddleware((to) => {
   if (to.name === 'chat' && !loggedIn.value) {
     return navigateTo('/')
   }
+  if (to.name === 'index' && loggedIn.value) {
+    return navigateTo('/chat') 
+  }
 })

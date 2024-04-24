@@ -34,9 +34,8 @@ const {
   onError: (error) => {
     toast.add({
       severity: 'error',
-      summary: 'Info Message',
+      summary: 'Error Message',
       detail: error,
-      group: 'tl',
       life: 3000
     })
   }

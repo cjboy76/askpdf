@@ -6,6 +6,10 @@
 
 <style>
 
+html {
+  background-color: rgb(39 39 42);
+}
+
 body {
   margin: 0;
 }

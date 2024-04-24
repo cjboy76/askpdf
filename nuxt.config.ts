@@ -1,5 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import { presetUno } from 'unocss'
 import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
@@ -16,11 +15,23 @@ export default defineNuxtConfig({
       }
     }
   },
-  modules: ['@vueuse/nuxt', '@unocss/nuxt', 'nuxt-auth-utils'],
-  unocss: {
-    presets: [presetUno()]
-  },
+  modules: ['@vueuse/nuxt', '@unocss/nuxt', 'nuxt-auth-utils', 'nuxt-primevue'],
   vite: {
     plugins: [topLevelAwait()]
-  }
+  },
+  primevue: {
+    components: {
+      exclude: ['Chart'],
+    },
+    options: {
+      ripple: true,
+    },
+  },
+  css: [
+    'primevue/resources/primevue.css',
+    'primeicons/primeicons.css',
+  ],
+  build: {
+    transpile: ['nuxt', 'primevue'],
+  },
 })

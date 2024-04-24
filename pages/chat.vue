@@ -1,32 +1,4 @@
 <script setup lang="ts">
-import {
-  NButton,
-  NInput,
-  NIcon,
-  NModal,
-  NCard,
-  NUpload,
-  NUploadDragger,
-  NText,
-  NP,
-  NSpin,
-  NAvatar,
-  NDropdown,
-  NInputGroup,
-  NForm,
-  type UploadFileInfo,
-  type UploadProps,
-  useDialog
-} from 'naive-ui'
-import {
-  CloudUploadOutline,
-  Key,
-  AtCircleSharp,
-  Document,
-  ChevronDown,
-  Trash
-} from '@vicons/ionicons5'
-import { useMessage } from 'naive-ui'
 import { useStorage } from '@vueuse/core'
 import { useChat, type Message } from 'ai/vue'
 import type { NuxtError } from 'nuxt/app'
@@ -36,6 +8,18 @@ import { get } from 'idb-keyval'
 import { createDocuments, CustomVectorStore } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
 import { useVectorStore } from '~/utils/vectorStore'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
+import PrimeButton from 'primevue/button'
+import PrimeDialog from 'primevue/dialog'
+import PrimeInputText from 'primevue/inputtext'
+import PrimeAvatar from 'primevue/avatar'
+import PrimeProgressSpinner from 'primevue/progressspinner'
+import PrimeFileUpload, { type FileUploadSelectEvent } from 'primevue/fileupload'
+import ConfirmDialog from 'primevue/confirmdialog';
+
+const toast = useToast()
+const confirm = useConfirm()
 
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
@@ -46,23 +30,25 @@ const {
   input,
   isLoading: useChatLoading
 } = useChat({
-  onError: (error) => message.error(error.message)
+  onError: (error) => {
+    toast.add({
+      severity: 'error',
+      summary: 'Info Message',
+      detail: error,
+      group: 'tl',
+      life: 3000
+    })
+  }
 })
 
 let vectorStore: CustomVectorStore
-
-const uploadFile = ref<UploadFileInfo[]>([])
 const showFileModal = ref(false)
 const showKeyModal = ref(false)
-const message = useMessage()
+const uploadFile = ref()
 
-const onChange: UploadProps['onChange'] = ({ file }) => {
-  uploadFile.value.push(file)
-}
+const onFileSelect = (event: FileUploadSelectEvent) => {
+  if (event.files.length) uploadFile.value = event.files[0]
 
-function uploadPdfCanceller() {
-  uploadFile.value = []
-  showFileModal.value = false
 }
 const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
@@ -82,16 +68,21 @@ watch(messages, (newValue) => {
 
 async function uploadPdf() {
   if (!storageOpenAIKey.value) {
-    message.info('請設定 OpenAI API Key')
+    toast.add({
+      severity: 'info',
+      summary: 'Info Message',
+      detail: '請設定 OpenAI API Key',
+      life: 3000
+    })
     return
   }
-  const file = toRaw(uploadFile.value[0])
-  uploadPdfCanceller()
-  if (!file.file) return
+  if (!uploadFile.value) return
+  const file = toRaw(uploadFile.value)
+  showFileModal.value = false
   fileUploading.value = true
   try {
     const formData = new FormData()
-    formData.append('file', file.file!)
+    formData.append('file', file)
     formData.append('user', user.value.sub)
 
     const pdfInfo = await $fetch('/api/pdfloader', {
@@ -101,11 +92,16 @@ async function uploadPdf() {
     const documents = await createDocuments(pdfInfo.data)
     documentDB.value = documents
     vectorStore.addDocuments(documents)
-    fileDB.value = await pdfToBase64(file.file as File)
-    const pdfBlob = new Blob([file.file!], { type: 'application/pdf' })
+    fileDB.value = await pdfToBase64(file as File)
+    const pdfBlob = new Blob([file], { type: 'application/pdf' })
     pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
-    message.error((error as any).data.message)
+    toast.add({
+      severity: 'error',
+      summary: 'Error Message',
+      detail: (error as any).data.message,
+      life: 3000
+    })
   } finally {
     fileUploading.value = false
   }
@@ -122,21 +118,13 @@ async function deletePdfData() {
 
 const userDropOptions = [
   {
-    label: user.value ? user.value.name : '',
-    key: 'profile'
-  },
-  {
     label: '登出',
-    key: 'logout'
+    command: () => {
+      clear()
+      navigateTo('/')
+    }
   }
 ]
-
-const onUserSelect = (key: string) => {
-  if (key === 'logout') {
-    clear()
-    navigateTo('/')
-  }
-}
 const answerLoading = ref(false)
 const pageLinkElement = ref<HTMLElement>()
 const pageLinkElementIsVisible = ref(false)
@@ -149,7 +137,6 @@ const { stop } = useIntersectionObserver(
 )
 
 function scrollToBottom() {
-  console.log('trigger scrollToBottom')
   pageLinkElement.value?.scrollIntoView({
     block: 'end',
     inline: 'nearest',
@@ -170,7 +157,11 @@ async function submitHandler(e: Event) {
     const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
     setMessages([
       ...messages.value,
-      { id: `${new Date().toISOString()}`, role: 'system', content: systemPrompt }
+      {
+        id: `${new Date().toISOString()}`,
+        role: 'system',
+        content: systemPrompt
+      }
     ])
     handleSubmit(e, {
       options: {
@@ -181,7 +172,12 @@ async function submitHandler(e: Event) {
     })
   } catch (error: unknown) {
     const { message: errorMessage } = error as NuxtError
-    message.error(errorMessage)
+    toast.add({
+      severity: 'error',
+      summary: 'Error Message',
+      detail: errorMessage,
+      life: 3000
+    })
     answerLoading.value = false
   }
 }
@@ -226,24 +222,21 @@ onUnmounted(() => {
 })
 
 const viewerRef = ref()
-function setPage(p: number) {
-  viewerRef.value.setPage(p)
-}
-
-const dialog = useDialog()
 
 function removeData() {
-  dialog.warning({
-    style: 'color: white',
-    autoFocus: false,
-    closable: false,
-    title: '清除資料',
-    content: '即將刪除 PDF 文件、對話紀錄',
-    positiveText: '確定',
-    negativeText: '先不要',
-    onPositiveClick: async () => {
+  confirm.require({
+    header: '清除資料',
+    message: '即將刪除 PDF 文件、對話紀錄',
+    acceptLabel: '確定',
+    rejectLabel: '先不要',
+    accept: async () => {
       await deletePdfData()
-      message.success('資料已刪除')
+      toast.add({
+        severity: 'success',
+        summary: 'Success Message',
+        detail: '資料已刪除',
+        life: 3000
+      })
     }
   })
 }
@@ -251,7 +244,18 @@ function removeData() {
 async function refreshStore(key: string) {
   vectorStore = useVectorStore(key)
   if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
-  message.info('OpenAI API key 已更新')
+  toast.add({
+    severity: 'success',
+    summary: 'Success Message',
+    detail: 'OpenAI API key 已更新',
+    life: 3000
+  })
+}
+
+const menu = ref()
+
+function toggleMenu(e: Event) {
+  menu.value.toggle(e)
 }
 </script>
 
@@ -275,57 +279,44 @@ async function refreshStore(key: string) {
         <div
           class="sticky top-0 py-4 px-4 z-10 flex justify-end items-center bg-zinc-800"
         >
-          <n-button
+          <PrimeButton
             v-if="user"
-            quaternary
+            text
             class="mx-1"
             @click="removeData"
-            :disabled="!fileDB"
           >
             清除資料
-            <template #icon>
-              <n-icon><Trash /></n-icon>
-            </template>
-          </n-button>
-          <n-button
+          </PrimeButton>
+          <PrimeButton
             v-if="user"
-            quaternary
+            text
             class="mx-1"
             @click="showKeyModal = true"
             :disabled="fileUploading"
           >
             OpenAI
-            <template #icon>
-              <n-icon><Key /></n-icon>
-            </template>
-          </n-button>
-          <n-button
+          </PrimeButton>
+          <PrimeButton
             v-if="user"
-            quaternary
+            text
             class="mx-1"
             @click="showFileModal = true"
             :disabled="fileUploading"
           >
             上傳文件
-            <template #icon>
-              <n-icon><Document /></n-icon>
-            </template>
-          </n-button>
-          <client-only>
-            <n-dropdown
-              v-if="loggedIn"
-              trigger="click"
-              :options="userDropOptions"
-              @select="onUserSelect"
-            >
-              <n-avatar
-                class="mx-4 cursor-pointer"
-                round
-                size="medium"
-                :src="user.picture"
-              />
-            </n-dropdown>
-          </client-only>
+          </PrimeButton>
+          <PrimeAvatar
+            v-if="loggedIn"
+            class="mx-4 cursor-pointer"
+            :image="user.picture"
+            @click="toggleMenu"
+          />
+          <Menu
+            ref="menu"
+            id="overlay_menu"
+            :model="userDropOptions"
+            :popup="true"
+          />
         </div>
         <div v-if="!fileDB" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
@@ -337,7 +328,7 @@ async function refreshStore(key: string) {
           v-show="fileUploading"
           class="w-4/5 mx-auto grid place-items-center"
         >
-          <n-spin size="medium" />
+          <PrimeProgressSpinner size="medium" />
         </div>
         <div
           v-for="{ content, role, id } of messages"
@@ -346,17 +337,18 @@ async function refreshStore(key: string) {
         >
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-end">
-              <n-avatar
+              <PrimeAvatar
                 v-show="role === 'user'"
                 class="w-8 h-8"
                 round
                 :src="user.picture"
               />
-              <n-avatar v-show="role === 'assistant'" class="w-8 h-8" round>
-                <n-icon>
-                  <AtCircleSharp />
-                </n-icon>
-              </n-avatar>
+              <PrimeAvatar
+                v-show="role === 'assistant'"
+                class="w-8 h-8"
+                round
+                icon="pi pi-user"
+              />
             </div>
             <div class="col-span-7">
               <div class="h-8 mb-2 grid items-center font-bold">
@@ -377,117 +369,78 @@ async function refreshStore(key: string) {
             v-for="(page, index) of relatedPagesSet"
             :key="index"
             class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
-            @click="setPage(page)"
+            @click="viewerRef.setViewerPage(page)"
           >
             #{{ page }}</span
           >
         </div>
       </div>
       <div class="h-12 pt-2 relative">
-        <n-form class="w-5/6 max-w-2xl mx-auto" @submit.prevent="submitHandler">
-          <n-input-group>
-            <n-input
-              size="large"
-              v-model:value="input"
-              placeholder="輸入訊息"
-              :disabled="answerLoading || fileUploading"
-            >
-            </n-input>
-            <n-button
-              attr-type="submit"
-              size="large"
-              :loading="answerLoading"
-              :disabled="!user || fileUploading"
-            >
-              Enter
-            </n-button>
-          </n-input-group>
-        </n-form>
-        <n-button
+        <div
+          class="w-5/6 max-w-2xl mx-auto flex"
+          @submit.prevent="submitHandler"
+        >
+          <PrimeInputText
+            class="flex-grow"
+            v-model="input"
+            placeholder="輸入訊息"
+            :disabled="answerLoading || fileUploading"
+          >
+          </PrimeInputText>
+          <PrimeButton class="ml-2" :disabled="!user || fileUploading">
+            Enter
+          </PrimeButton>
+        </div>
+        <PrimeButton
           v-show="!pageLinkElementIsVisible"
           size="small"
           circle
           class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100"
           @click="scrollToBottom"
           style="background-color: black"
+          icon="pi pi-caret-down"
         >
-          <template #icon>
-            <n-icon><ChevronDown /></n-icon>
-          </template>
-        </n-button>
+        </PrimeButton>
       </div>
       <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
     </div>
-    <n-modal v-model:show="showFileModal">
-      <n-card
-        title="上傳文件"
-        :bordered="false"
-        size="huge"
-        role="dialog"
-        aria-modal="true"
-        class="w-[500px]"
+    <PrimeDialog v-model:visible="showFileModal" :style="{ width: '25rem' }">
+      <template #header>
+        <div>上傳文件</div>
+      </template>
+      <PrimeFileUpload
+        class="flex justify-center"
+        mode="basic"
+        accept=".pdf"
+        chooseLabel="上傳"
+        @select="onFileSelect"
       >
-        <n-upload
-          :multiple="false"
-          directory-dnd
-          accept=".pdf"
-          :on-change="onChange"
-          :show-remove-button="true"
-          :max="1"
+      </PrimeFileUpload>
+      <div class="mt-4 flex justify-end">
+        <PrimeButton text class="mr-4" @click="showFileModal = false"
+          >取消</PrimeButton
         >
-          <n-upload-dragger>
-            <div style="margin-bottom: 12px">
-              <n-icon size="48" :depth="3">
-                <CloudUploadOutline />
-              </n-icon>
-            </div>
-            <n-text class="text-xl"> 點擊或拖曳文件至此區域上傳 </n-text>
-            <n-p depth="3" class="mt-2">
-              嚴禁上傳敏感資訊，例如您的銀行卡PIN碼或信用卡到期日。
-            </n-p>
-          </n-upload-dragger>
-        </n-upload>
-        <template #footer>
-          <div class="flex justify-end">
-            <n-button quaternary class="mr-4" @click="uploadPdfCanceller"
-              >取消</n-button
-            >
-            <n-button
-              quaternary
-              :disabled="uploadFile.length === 0"
-              @click="uploadPdf"
-              >確認</n-button
-            >
-          </div>
-        </template>
-      </n-card>
-    </n-modal>
-    <n-modal v-model:show="showKeyModal">
-      <n-card
-        title="OpenAI Key"
-        :bordered="false"
-        size="huge"
-        role="dialog"
-        aria-modal="true"
-        class="w-[500px]"
-      >
-        <n-input
-          type="password"
-          show-password-on="mousedown"
-          placeholder="貼上 OpenAI API Key"
-          v-model:value="storageOpenAIKey"
-          @change="refreshStore(storageOpenAIKey)"
-        />
-        <template #footer>
-          <div class="flex justify-end">
-            <n-button quaternary @click="showKeyModal = false">關閉</n-button>
-          </div>
-        </template>
-      </n-card>
-    </n-modal>
+        <PrimeButton text :disabled="!uploadFile" @click="uploadPdf">確認</PrimeButton>
+      </div>
+    </PrimeDialog>
+    <PrimeDialog v-model:visible="showKeyModal" :style="{ width: '25rem' }">
+      <template #header>
+        <div>OpenAI Key</div>
+      </template>
+      <PrimeInputText
+        class="w-full"
+        placeholder="貼上 OpenAI API Key"
+        v-model="storageOpenAIKey"
+        @change="refreshStore(storageOpenAIKey)"
+      />
+      <div class="mt-4 flex justify-end">
+        <PrimeButton text @click="showKeyModal = false">關閉</PrimeButton>
+      </div>
+    </PrimeDialog>
+    <ConfirmDialog />
   </div>
 </template>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap'); */
 </style>

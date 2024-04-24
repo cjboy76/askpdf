@@ -1,28 +1,45 @@
 <template>
   <div class="overflow-hidden h-full">
-    <div class="flex justify-between items-center py-1 bg-zinc-800 h-8">
+    <div class="flex justify-between items-center py-1 bg-zinc-800 h-6 my-1">
       <div class="flex justify-center items-center">
-        <Button text rounded icon="pi pi-angle-up"          class="mx-1"
+        <Button
+          text
+          rounded
+          icon="pi pi-angle-up"
+          class="mx-1"
           @click="togglePageHandler(-1)"
-          :disabled="!props.pdfSrc" />
-        <div class="w-14 flex mx-1">
-          <InputNumber v-model="pageNum" :useGrouping="false" :min="1" :max="pages" :disabled="!props.pdfSrc" @blur="setPageHandler" />
+          :disabled="!props.pdfSrc"
+        />
+        <div class="flex mx-1">
+          <input
+          ref="input"
+          class="w-20"
+          type="number"
+            v-model="pageNum"
+            :useGrouping="false"
+            :min="1"
+            :max="pages"
+            :disabled="!props.pdfSrc"
+            @keyup.enter="input.blur()"
+            @blur="setPageHandler"
+          />
         </div>
         <div class="grid place-items-center mx-1">
           <span> / {{ pages }}</span>
         </div>
-        <Button text rounded icon="pi pi-angle-down"          class="mx-1"
+        <Button
+          text
+          rounded
+          icon="pi pi-angle-down"
+          class="mx-1"
           @click="togglePageHandler(1)"
-          :disabled="!props.pdfSrc" />
+          :disabled="!props.pdfSrc"
+        />
       </div>
-      <div>
-        <button class="mx-1" :disabled="!props.pdfSrc">
-          minus
-        </button>
-        <button class="mx-1" :disabled="!props.pdfSrc">
-          plus
-        </button>
-      </div>
+      <!-- <div>
+        <button class="mx-1" :disabled="!props.pdfSrc">minus</button>
+        <button class="mx-1" :disabled="!props.pdfSrc">plus</button>
+      </div> -->
     </div>
     <div
       id="main-container"
@@ -36,8 +53,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { CustomPDFViewer } from '#imports'
-import Button from 'primevue/button';
-import InputNumber from 'primevue/inputnumber';
+import Button from 'primevue/button'
+
+const input = ref()
 
 const props = defineProps({
   pdfSrc: String
@@ -77,7 +95,7 @@ onMounted(() => (pdfViewer = new CustomPDFViewer()))
 defineExpose({
   setViewerPage: (num: number) => {
     pageNum.value = num
-  pdfViewer.setPage(num)
+    pdfViewer.setPage(num)
   }
 })
 </script>

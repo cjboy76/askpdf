@@ -20,16 +20,4 @@ import {
       transformerDirectives(),
       transformerVariantGroup(),
     ],
-    preflights: [
-      {
-        layer: 'primevue-layer',
-        getCSS: async () => (await fetch('/assets/theme.css')).text(),
-      },
-    ],
-    layers: {
-      'components': -1,
-      'default': 1,
-      'utilities': 2,
-      'primevue-layer': 3,
-    }
   })

@@ -24,12 +24,13 @@ export default defineNuxtConfig({
       exclude: ['Chart'],
     },
     options: {
-      ripple: true,
+      ripple: false,
     },
   },
   css: [
     'primevue/resources/primevue.css',
     'primeicons/primeicons.css',
+    './assets/theme.css',
   ],
   build: {
     transpile: ['nuxt', 'primevue'],

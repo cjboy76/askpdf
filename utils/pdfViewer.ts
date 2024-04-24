@@ -39,7 +39,7 @@ export class CustomPDFViewer {
   }
 
   async setupinstance() {
-    const { EventBus, PDFSinglePageViewer } = await import('pdfjs-dist/legacy/web/pdf_viewer.mjs');
+    const { EventBus, PDFSinglePageViewer } = await import('pdfjs-dist/legacy/web/pdf_viewer.js');
     const eventBus = new EventBus()
     this.PDFViewer = new PDFSinglePageViewer({
       container: document.querySelector<HTMLDivElement>('#main-container')!,

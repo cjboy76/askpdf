@@ -18,6 +18,7 @@ import PrimeProgressSpinner from 'primevue/progressspinner'
 import PrimeFileUpload, { type FileUploadSelectEvent } from 'primevue/fileupload'
 import ConfirmDialog from 'primevue/confirmdialog';
 import Toast from 'primevue/toast';
+import { usePDFLoader } from '~/utils/pdfloader'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -81,14 +82,7 @@ async function uploadPdf() {
   showFileModal.value = false
   fileUploading.value = true
   try {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('user', user.value.sub)
-
-    const pdfInfo = await $fetch('/api/pdfloader', {
-      method: 'post',
-      body: formData
-    })
+    const pdfInfo = await usePDFLoader(file)
     const documents = await createDocuments(pdfInfo.data)
     documentDB.value = documents
     vectorStore.addDocuments(documents)
@@ -96,6 +90,7 @@ async function uploadPdf() {
     const pdfBlob = new Blob([file], { type: 'application/pdf' })
     pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
+    console.log(error)
     toast.add({
       severity: 'error',
       summary: 'Error Message',

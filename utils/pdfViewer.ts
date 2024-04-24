@@ -1,7 +1,7 @@
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.js'
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'
 import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer';
 
-pdfjs.GlobalWorkerOptions.workerSrc = '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString()
 
 export class CustomPDFViewer {
   private pdfSrc: string | undefined
@@ -15,10 +15,7 @@ export class CustomPDFViewer {
   }
 
   async setPdf(src: string) {
-    if (!src) {
-      this.PDFViewer._resetView()
-      return
-    }
+    if (this.PDFViewer) this.PDFViewer._resetView()
     this.pdfSrc = src
     const PDFDocument = await pdfjs.getDocument(this.pdfSrc).promise.then((PDFDocument) => PDFDocument)
     this.PDFViewer.setDocument(PDFDocument)
@@ -39,7 +36,7 @@ export class CustomPDFViewer {
   }
 
   async setupinstance() {
-    const { EventBus, PDFSinglePageViewer } = await import('pdfjs-dist/legacy/web/pdf_viewer.js');
+    const { EventBus, PDFSinglePageViewer } = await import('pdfjs-dist/legacy/web/pdf_viewer.mjs');
     const eventBus = new EventBus()
     this.PDFViewer = new PDFSinglePageViewer({
       container: document.querySelector<HTMLDivElement>('#main-container')!,

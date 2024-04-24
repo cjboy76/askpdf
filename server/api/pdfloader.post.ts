@@ -1,6 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist'
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = '//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js'
+pdfjsLib.GlobalWorkerOptions.workerSrc = '//unpkg.com/pdfjs-dist@4.0.189/build/pdf.worker.min.js'
 
 export default defineEventHandler(async (event) => {
   const body = await readFormData(event)

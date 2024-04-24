@@ -2,7 +2,8 @@
 import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: import.meta.dev },
+  ssr: true,
   app: {
     head: {
       title: 'AskPDF'

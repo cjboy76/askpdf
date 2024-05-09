@@ -8,20 +8,9 @@ import { get } from 'idb-keyval'
 import { createDocuments, CustomVectorStore } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
 import { useVectorStore } from '~/utils/vectorStore'
-import { useConfirm } from 'primevue/useconfirm'
-import { useToast } from 'primevue/usetoast'
-import PrimeButton from 'primevue/button'
-import PrimeDialog from 'primevue/dialog'
-import PrimeInputText from 'primevue/inputtext'
-import PrimeAvatar from 'primevue/avatar'
-import PrimeProgressSpinner from 'primevue/progressspinner'
-import PrimeFileUpload, { type FileUploadSelectEvent } from 'primevue/fileupload'
-import ConfirmDialog from 'primevue/confirmdialog';
-import Toast from 'primevue/toast';
 import { usePDFLoader } from '~/utils/pdfloader'
 
 const toast = useToast()
-const confirm = useConfirm()
 
 const { loggedIn, user, clear } = useUserSession()
 const storageOpenAIKey = useStorage('openai_key', '')
@@ -34,10 +23,8 @@ const {
 } = useChat({
   onError: (error) => {
     toast.add({
-      severity: 'error',
-      summary: 'Error Message',
-      detail: error,
-      life: 3000
+      title: 'Error',
+      description: error.message
     })
   }
 })
@@ -47,9 +34,8 @@ const showFileModal = ref(false)
 const showKeyModal = ref(false)
 const uploadFile = ref()
 
-const onFileSelect = (event: FileUploadSelectEvent) => {
-  if (event.files.length) uploadFile.value = event.files[0]
-
+const onFileSelect = (files: FileList) => {
+  if (files[0]) uploadFile.value = files[0]
 }
 const fileUploading = ref(false)
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
@@ -70,10 +56,8 @@ watch(messages, (newValue) => {
 async function uploadPdf() {
   if (!storageOpenAIKey.value) {
     toast.add({
-      severity: 'info',
-      summary: 'Info Message',
-      detail: '請設定 OpenAI API Key',
-      life: 3000
+      title: 'Info',
+      description: '請設定 OpenAI API Key'
     })
     return
   }
@@ -90,12 +74,9 @@ async function uploadPdf() {
     const pdfBlob = new Blob([file], { type: 'application/pdf' })
     pdfSrc.value = URL.createObjectURL(pdfBlob)
   } catch (error) {
-    console.log(error)
     toast.add({
-      severity: 'error',
-      summary: 'Error Message',
-      detail: '上傳檔案失敗，請確認檔案類型',
-      life: 3000
+      title: 'Error',
+      description: '上傳檔案失敗，請確認檔案類型'
     })
   } finally {
     fileUploading.value = false
@@ -111,14 +92,22 @@ async function deletePdfData() {
   setMessages([])
 }
 
-const userDropOptions = [
-  {
-    label: '登出',
-    command: async () => {
+const userDropdownOptions = [
+  [
+    {
+      label: user.value.email,
+      slot: 'account',
+      disabled: true
+    }
+  ],
+  [{
+    label: 'Sign out',
+    icon: 'i-heroicons-arrow-left-on-rectangle',
+    click: async () => {
       await clear()
       navigateTo('/')
     }
-  }
+  }]
 ]
 const answerLoading = ref(false)
 const pageLinkElement = ref<HTMLElement>()
@@ -168,10 +157,8 @@ async function submitHandler(e: Event) {
   } catch (error: unknown) {
     const { message: errorMessage } = error as NuxtError
     toast.add({
-      severity: 'error',
-      summary: 'Error Message',
-      detail: errorMessage,
-      life: 3000
+      title: 'Error',
+      description: errorMessage
     })
     answerLoading.value = false
   }
@@ -217,40 +204,24 @@ onUnmounted(() => {
 })
 
 const viewerRef = ref()
+const showRemoveDataConfirmModal = ref(false)
 
-function removeData() {
-  confirm.require({
-    header: '清除資料',
-    message: '即將刪除 PDF 文件、對話紀錄',
-    acceptLabel: '確定',
-    rejectLabel: '先不要',
-    accept: async () => {
-      await deletePdfData()
-      toast.add({
-        severity: 'success',
-        summary: 'Success Message',
-        detail: '資料已刪除',
-        life: 3000
-      })
-    }
+async function removeData() {
+  await deletePdfData()
+  toast.add({
+    title: 'Success',
+    description: '資料已刪除'
   })
+  showRemoveDataConfirmModal.value = false
 }
 
 async function refreshStore(key: string) {
   vectorStore = useVectorStore(key)
   if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
   toast.add({
-    severity: 'success',
-    summary: 'Success Message',
-    detail: 'OpenAI API key 已更新',
-    life: 3000
+    title: 'Success',
+    description: 'OpenAI API key 已更新'
   })
-}
-
-const menu = ref()
-
-function toggleMenu(e: Event) {
-  menu.value.toggle(e)
 }
 </script>
 
@@ -259,59 +230,43 @@ function toggleMenu(e: Event) {
     <div class="col-span-3 h-full flex flex-col flex-grow relative">
       <client-only fallback-tag="span" fallback="Loading comments...">
         <PdfViewer v-if="user" ref="viewerRef" :pdfSrc="pdfSrc" />
-        <div
-          v-else
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-        >
+        <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           d(`･∀･)b
         </div>
       </client-only>
     </div>
     <div class="col-span-3 flex flex-col h-full">
-      <div
-        class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow"
-      >
-        <div
-          class="sticky top-0 py-4 px-4 z-10 flex justify-end items-center bg-zinc-800"
-        >
-          <PrimeButton
-            v-if="user"
-            text
-            class="mx-1"
-            @click="removeData"
-          >
+      <div class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow">
+        <div class="sticky top-0 py-4 px-4 z-10 flex justify-end items-center bg-zinc-800">
+          <UButton v-if="user" text class="mx-1" @click="showRemoveDataConfirmModal = true">
             清除資料
-          </PrimeButton>
-          <PrimeButton
-            v-if="user"
-            text
-            class="mx-1"
-            @click="showKeyModal = true"
-            :disabled="fileUploading"
-          >
+          </UButton>
+          <UButton v-if="user" text class="mx-1" @click="showKeyModal = true" :disabled="fileUploading">
             OpenAI
-          </PrimeButton>
-          <PrimeButton
-            v-if="user"
-            text
-            class="mx-1"
-            @click="showFileModal = true"
-            :disabled="fileUploading"
-          >
+          </UButton>
+          <UButton v-if="user" text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
             上傳文件
-          </PrimeButton>
-          <PrimeAvatar
-            v-if="loggedIn"
-            class="mx-4 cursor-pointer"
-            :image="user.picture"
-            @click="toggleMenu"
-          />
-          <Menu
-            ref="menu"
-            id="overlay_menu"
-            :model="userDropOptions"
-            :popup="true"
-          />
+          </UButton>
+          <UDropdown :items="userDropdownOptions" :ui="{ item: { disabled: 'cursor-text select-text' } }"
+            :popper="{ placement: 'bottom-start' }">
+            <UAvatar v-if="loggedIn" :src="user.picture" class="ml-2" />
+            <template #account="{ item }">
+              <div class="text-left">
+                <p>
+                  Signed in as
+                </p>
+                <p class="truncate font-medium text-gray-900 dark:text-white">
+                  {{ item.label }}
+                </p>
+              </div>
+            </template>
+
+            <template #item="{ item }">
+              <span class="truncate">{{ item.label }}</span>
+
+              <UIcon :name="item.icon" class="flex-shrink-0 h-4 w-4 text-gray-400 dark:text-gray-500 ms-auto" />
+            </template>
+          </UDropdown>
         </div>
         <div v-if="!fileDB" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
@@ -319,31 +274,11 @@ function toggleMenu(e: Event) {
             上傳文件，開始體驗
           </h3>
         </div>
-        <div
-          v-show="fileUploading"
-          class="w-4/5 mx-auto grid place-items-center"
-        >
-          <PrimeProgressSpinner size="medium" />
-        </div>
-        <div
-          v-for="{ content, role, id } of messages"
-          :key="id"
-          v-show="role !== 'system'"
-        >
+        <div v-for="{ content, role, id } of messages" :key="id" v-show="role !== 'system'">
           <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-end">
-              <PrimeAvatar
-                v-if="role === 'user'"
-                class="w-8 h-8"
-                round
-                :image="user.picture"
-              />
-              <PrimeAvatar
-                v-if="role === 'assistant'"
-                class="w-8 h-8"
-                round
-                icon="pi pi-user"
-              />
+              <UAvatar v-if="role === 'user'" class="w-8 h-8" :src="user.picture" />
+              <UIcon v-if="role === 'assistant'" class="w-8 h-8" name="i-heroicons-user-solid" />
             </div>
             <div class="col-span-7">
               <div class="h-8 mb-2 grid items-center font-bold">
@@ -355,89 +290,79 @@ function toggleMenu(e: Event) {
             </div>
           </div>
         </div>
-        <div
-          ref="pageLinkElement"
-          v-show="!answerLoading"
-          class="w-3/5 mx-auto pb-10"
-        >
-          <span
-            v-for="(page, index) of relatedPagesSet"
-            :key="index"
+        <div ref="pageLinkElement" v-show="!answerLoading" class="w-3/5 mx-auto pb-10">
+          <span v-for="(page, index) of relatedPagesSet" :key="index"
             class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
-            @click="viewerRef.setViewerPage(page)"
-          >
-            #{{ page }}</span
-          >
+            @click="viewerRef.setViewerPage(page)">
+            #{{ page }}</span>
         </div>
       </div>
       <div class="h-12 pt-2 relative">
-        <form
-          class="w-5/6 max-w-2xl mx-auto flex"
-          @submit.prevent="submitHandler"
-        >
-          <PrimeInputText
-            class="flex-grow"
-            v-model="input"
-            placeholder="Message..."
-            :disabled="answerLoading || fileUploading"
-          >
-          </PrimeInputText>
-          <PrimeButton text outlined class="ml-2" :disabled="!user || fileUploading">
-            <span v-show="answerLoading"><i class="pi pi-spin pi-spinner"></i></span>
-            <span v-show="!answerLoading">Enter</span>
-          </PrimeButton>
+        <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
+          <UInput class="flex-grow" v-model="input" placeholder="Message..." :disabled="answerLoading || fileUploading">
+          </UInput>
+          <UButton :loading="answerLoading" class="ml-2" :disabled="!user || fileUploading">
+            Enter
+          </UButton>
         </form>
-        <PrimeButton
-          v-show="!pageLinkElementIsVisible"
-          size="small"
-          circle
-          class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100"
-          @click="scrollToBottom"
-          style="background-color: black"
-          icon="pi pi-caret-down"
-        >
-        </PrimeButton>
+        <UButton v-show="!pageLinkElementIsVisible" circle
+          class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" @click="scrollToBottom"
+          icon="i-heroicons-chevron-down">
+        </UButton>
       </div>
       <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
     </div>
-    <PrimeDialog v-model:visible="showFileModal" :style="{ width: '25rem' }">
-      <template #header>
-        <div>上傳文件</div>
-      </template>
-      <PrimeFileUpload
-        class="flex justify-center"
-        mode="basic"
-        accept=".pdf"
-        chooseLabel="上傳"
-        @select="onFileSelect"
-      >
-      </PrimeFileUpload>
-      <div class="mt-4 flex justify-end">
-        <PrimeButton text class="mr-4" @click="showFileModal = false"
-          >取消</PrimeButton
-        >
-        <PrimeButton text :disabled="!uploadFile" @click="uploadPdf">確認</PrimeButton>
-      </div>
-    </PrimeDialog>
-    <PrimeDialog v-model:visible="showKeyModal" :style="{ width: '25rem' }">
-      <template #header>
-        <div>OpenAI Key</div>
-      </template>
-      <PrimeInputText
-        class="w-full"
-        placeholder="貼上 OpenAI API Key"
-        v-model="storageOpenAIKey"
-        @change="refreshStore(storageOpenAIKey)"
-      />
-      <div class="mt-4 flex justify-end">
-        <PrimeButton text @click="showKeyModal = false">關閉</PrimeButton>
-      </div>
-    </PrimeDialog>
-    <ConfirmDialog />
-    <Toast />
+    <UModal v-model="showFileModal" :style="{ width: '25rem' }">
+      <UCard>
+        <template #header>
+          <div>上傳文件</div>
+        </template>
+        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf"
+          @change="onFileSelect">
+        </UInput>
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton text class="mr-4" @click="showFileModal = false">取消</UButton>
+            <UButton text :disabled="!uploadFile" @click="uploadPdf">確認</UButton>
+          </div>
+        </template>
+
+      </UCard>
+    </UModal>
+    <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
+      <UCard>
+        <template #header>
+          <div>OpenAI Key</div>
+        </template>
+        <UInput placeholder="貼上 OpenAI API Key" v-model="storageOpenAIKey"
+          @change="refreshStore(storageOpenAIKey)" />
+
+          <template #footer>
+
+            <div class="flex justify-end">
+              <UButton text @click="showKeyModal = false">關閉</UButton>
+            </div>
+
+          </template>
+      </UCard>
+    </UModal>
+    <UModal v-model="showRemoveDataConfirmModal">
+      <UCard>
+        <template #header>
+          <h3>清除資料</h3>
+        </template>
+
+        <div>
+          即將刪除 PDF 文件、對話紀錄
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton class="mr-4" @click="showRemoveDataConfirmModal = false">先不要</UButton>
+            <UButton @click="removeData">確定</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
   </div>
 </template>
-
-<style>
-/* @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap'); */
-</style>

@@ -16,24 +16,11 @@ export default defineNuxtConfig({
       }
     }
   },
-  modules: ['@vueuse/nuxt', '@unocss/nuxt', 'nuxt-auth-utils', 'nuxt-primevue'],
+  modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui'],
   vite: {
-    plugins: [topLevelAwait()]
+    plugins: [topLevelAwait()],
   },
-  primevue: {
-    components: {
-      exclude: ['Chart', 'Editor'],
-    },
-    options: {
-      ripple: false,
-    },
-  },
-  css: [
-    'primevue/resources/primevue.css',
-    'primeicons/primeicons.css',
-    './assets/theme.css',
-  ],
   build: {
-    transpile: ['nuxt', 'primevue'],
+    transpile: ['nuxt'],
   },
 })

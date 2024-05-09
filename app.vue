@@ -2,6 +2,7 @@
   <NuxtLayout>
     <NuxtPage class="h-screen bg-zinc-800 color-zinc-100" />
   </NuxtLayout>
+  <UNotifications />
 </template>
 
 <script setup>

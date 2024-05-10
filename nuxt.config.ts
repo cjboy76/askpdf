@@ -16,11 +16,11 @@ export default defineNuxtConfig({
       }
     }
   },
-  modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui'],
+  modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui', 'nuxt-gtag'],
   vite: {
-    plugins: [topLevelAwait()],
+    plugins: [topLevelAwait()]
   },
   build: {
-    transpile: ['nuxt'],
-  },
+    transpile: ['nuxt']
+  }
 })

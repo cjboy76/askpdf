@@ -22,5 +22,8 @@ export default defineNuxtConfig({
   },
   build: {
     transpile: ['nuxt']
+  },
+  gtag: {
+    id: ''
   }
 })

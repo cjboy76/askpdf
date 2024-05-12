@@ -56,15 +56,12 @@ function setPageHandler() {
   pdfViewer.setPage(pageNum.value)
 }
 
-watch(
-  () => props.pdfSrc,
-  async (value = '') => {
-    await pdfViewer.setPdf(value)
-    pages.value = pdfViewer.numPages()
-  }
-)
+watchEffect(async () => {
+  if (!pdfViewer) pdfViewer = new CustomPDFViewer()
+  await pdfViewer.setPdf(props.pdfSrc || '')
+  pages.value = pdfViewer.numPages()
 
-onMounted(() => (pdfViewer = new CustomPDFViewer()))
+})
 
 defineExpose({
   setViewerPage: (num: number) => {

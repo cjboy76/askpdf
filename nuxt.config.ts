@@ -6,7 +6,8 @@ export default defineNuxtConfig({
   ssr: true,
   app: {
     head: {
-      title: 'AskPDF'
+      title: 'AskPDF',
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.png' }]
     }
   },
   nitro: {
@@ -25,5 +26,5 @@ export default defineNuxtConfig({
   },
   gtag: {
     id: ''
-  }
+  },
 })

@@ -208,7 +208,7 @@ async function refreshStore(key: string) {
 <template>
   <div class="grid grid-cols-6">
     <div class="col-span-3 h-full flex flex-col flex-grow relative">
-      <client-only fallback-tag="span" fallback="One moment please...">
+      <client-only fallback-tag="span" fallback="">
         <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdfSrc="pdfSrc" />
         <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           d(`･∀･)b

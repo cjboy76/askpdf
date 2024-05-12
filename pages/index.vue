@@ -47,10 +47,6 @@ const { data: relatedPagesSet } = useIDBKeyval<number[]>(
   []
 )
 
-watch(messages, (newValue) => {
-  messagesDB.value = newValue
-})
-
 async function uploadPdf() {
   if (!storageOpenAIKey.value) {
     toast.add({
@@ -147,6 +143,10 @@ async function submitHandler(e: Event) {
 watch(useChatLoading, (v) => {
   if (!v) {
     answerLoading.value = false
+    messagesDB.value = messages.value.map((m) => {
+      if (isProxy(m)) return toRaw(m)
+      return m
+    })
   }
 })
 
@@ -167,8 +167,6 @@ async function refreshFromCache() {
     vectorStore.addDocuments(docsFromStore)
   }
 
-  console.log(pdfSrc.value, msgFromStore)
-
   const relatedPageNumFromStore = await get('askpdf-related-pages')
   if (relatedPageNumFromStore.length > 0)
     relatedPagesSet.value = relatedPageNumFromStore
@@ -180,7 +178,7 @@ onMounted(() => {
   refreshFromCache()
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   pdfSrc.value && URL.revokeObjectURL(pdfSrc.value)
   stop()
 })
@@ -279,8 +277,7 @@ async function refreshStore(key: string) {
         <template #header>
           <div>上傳文件</div>
         </template>
-        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf"
-          @change="onFileSelect">
+        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf" @change="onFileSelect">
         </UInput>
         <template #footer>
           <div class="flex justify-end">
@@ -297,17 +294,17 @@ async function refreshStore(key: string) {
           <div>OpenAI Key</div>
         </template>
         <div class="mb-4">
-          <a class="underline" target="_blank" href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> 取得 OpenAI API Key</a>
+          <a class="underline" target="_blank"
+            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> 取得 OpenAI API Key</a>
         </div>
-        <UInput placeholder="API Key" v-model="storageOpenAIKey"
-          @change="refreshStore(storageOpenAIKey)" />
-          <template #footer>
+        <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
+        <template #footer>
 
-            <div class="flex justify-end">
-              <UButton text @click="showKeyModal = false">關閉</UButton>
-            </div>
+          <div class="flex justify-end">
+            <UButton text @click="showKeyModal = false">關閉</UButton>
+          </div>
 
-          </template>
+        </template>
       </UCard>
     </UModal>
     <UModal v-model="showRemoveDataConfirmModal">

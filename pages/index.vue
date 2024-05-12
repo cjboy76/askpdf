@@ -84,6 +84,7 @@ async function deletePdfData() {
   relatedPagesSet.value = []
   documentDB.value = []
   setMessages([])
+  messagesDB.value = []
 }
 const answerLoading = ref(false)
 const pageLinkElement = ref<HTMLElement>()

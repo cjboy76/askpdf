@@ -1,0 +1,17 @@
+{
+    "lang": "Languages",
+    "greeting": "Upload files and start experiencing",
+    "clear-data": "Clear data",
+    "clear-data-message": "All data including PDF files, chat logs, AI models, etc. will be deleted. Are you sure you want to clear?",
+    "open-ai-key": "Open AI Key",
+    "open-ai-key-message": "How to obtain OpenAI API Key",
+    "upload-file": "Upload file",
+    "input-placeholder": "Start texting...",
+    "confirm": "Yes",
+    "cancel": "No",
+    "close": "Close",
+    "clear-data-success": "Data has been cleared",
+    "open-ai-key-success": "OpenAI API key has been updated",
+    "open-ai-key-required": "Please set the OpenAI API Key",
+    "upload-file-error": "Failed to upload file, please check the file type"
+}

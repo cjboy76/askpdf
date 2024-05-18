@@ -1,0 +1,17 @@
+{
+    "lang": "語言",
+    "greeting": "上傳文件，開始體驗",
+    "clear-data": "清除資料",
+    "clear-data-message": "即將刪除 PDF 文件、對話紀錄、AI 模型等所有資料，確定要清除嗎?",
+    "open-ai-key": "Open AI Key",
+    "open-ai-key-message": "如何取得 OpenAI API Key",
+    "upload-file": "上傳文件",
+    "input-placeholder": "請輸入文字...",
+    "confirm": "確定",
+    "cancel": "取消",
+    "close": "關閉",
+    "clear-data-success": "資料已清除",
+    "open-ai-key-success": "OpenAI API key 已更新",
+    "open-ai-key-required": "請設定 OpenAI API Key",
+    "upload-file-error": "上傳檔案失敗，請確認檔案類型"
+}

@@ -9,7 +9,9 @@ import { createDocuments, CustomVectorStore } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
 import { useVectorStore } from '~/utils/vectorStore'
 import { usePDFLoader } from '~/utils/pdfloader'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const toast = useToast()
 const storageOpenAIKey = useStorage('openai_key', '')
 const {
@@ -51,7 +53,7 @@ async function uploadPdf() {
   if (!storageOpenAIKey.value) {
     toast.add({
       title: 'Info',
-      description: '請設定 OpenAI API Key'
+      description: t('open-ai-key-required')
     })
     return
   }
@@ -70,7 +72,7 @@ async function uploadPdf() {
   } catch (error) {
     toast.add({
       title: 'Error',
-      description: '上傳檔案失敗，請確認檔案類型'
+      description: t('upload-file-error')
     })
   } finally {
     fileUploading.value = false
@@ -185,15 +187,15 @@ onBeforeUnmount(() => {
 })
 
 const viewerRef = ref()
-const showRemoveDataConfirmModal = ref(false)
+const showClearDataConfirmModal = ref(false)
 
-async function removeData() {
+async function clearData() {
   await deletePdfData()
   toast.add({
     title: 'Success',
-    description: '資料已刪除'
+    description: t('clear-data-success')
   })
-  showRemoveDataConfirmModal.value = false
+  showClearDataConfirmModal.value = false
 }
 
 async function refreshStore(key: string) {
@@ -201,7 +203,7 @@ async function refreshStore(key: string) {
   if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
   toast.add({
     title: 'Success',
-    description: 'OpenAI API key 已更新'
+    description: t('open-ai-key-success')
   })
 }
 </script>
@@ -219,20 +221,21 @@ async function refreshStore(key: string) {
     <div class="col-span-3 flex flex-col h-full">
       <div class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow">
         <div class="sticky top-0 py-4 px-4 z-10 flex justify-end items-center bg-zinc-800">
-          <UButton text class="mx-1" @click="showRemoveDataConfirmModal = true">
-            清除資料
+          <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
+            {{ t('clear-data') }}
           </UButton>
           <UButton text class="mx-1" @click="showKeyModal = true" :disabled="fileUploading">
-            OpenAI
+            {{ t('open-ai-key') }}
           </UButton>
           <UButton text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
-            上傳文件
+            {{ t('upload-file') }}
           </UButton>
+          <LangSelector />
         </div>
         <div v-if="!fileDB" class="text-center mt-20">
           <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
           <h3 v-if="!pdfSrc" class="font-bold text-center mb-4 opacity-50">
-            上傳文件，開始體驗
+            {{ t('greeting') }}
           </h3>
         </div>
         <div v-for="{ content, role, id } of messages" :key="id" v-show="role !== 'system'">
@@ -260,7 +263,8 @@ async function refreshStore(key: string) {
       </div>
       <div class="h-12 pt-2 relative">
         <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
-          <UInput class="flex-grow" v-model="input" placeholder="Message..." :disabled="answerLoading || fileUploading">
+          <UInput class="flex-grow" v-model="input" :placeholder="t('input-placeholder')"
+            :disabled="answerLoading || fileUploading">
           </UInput>
           <UButton :loading="answerLoading" class="ml-2" :disabled="fileUploading">
             Enter
@@ -276,14 +280,14 @@ async function refreshStore(key: string) {
     <UModal v-model="showFileModal" :style="{ width: '25rem' }">
       <UCard>
         <template #header>
-          <div>上傳文件</div>
+          <div>{{ t('upload-file') }}</div>
         </template>
         <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf" @change="onFileSelect">
         </UInput>
         <template #footer>
           <div class="flex justify-end">
-            <UButton text class="mr-4" @click="showFileModal = false">取消</UButton>
-            <UButton text :disabled="!uploadFile" @click="uploadPdf">確認</UButton>
+            <UButton text class="mr-4" @click="showFileModal = false">{{ t('cancel') }}</UButton>
+            <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
           </div>
         </template>
 
@@ -292,36 +296,37 @@ async function refreshStore(key: string) {
     <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
       <UCard>
         <template #header>
-          <div>OpenAI Key</div>
+          <div>{{ t('open-ai-key') }}</div>
         </template>
         <div class="mb-4">
           <a class="underline" target="_blank"
-            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> 取得 OpenAI API Key</a>
+            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
+              t('open-ai-key-message')}}</a>
         </div>
         <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
         <template #footer>
 
           <div class="flex justify-end">
-            <UButton text @click="showKeyModal = false">關閉</UButton>
+            <UButton text @click="showKeyModal = false">{{ t('close') }}</UButton>
           </div>
 
         </template>
       </UCard>
     </UModal>
-    <UModal v-model="showRemoveDataConfirmModal">
+    <UModal v-model="showClearDataConfirmModal">
       <UCard>
         <template #header>
-          <h3>清除資料</h3>
+          <h3>{{ t('clear-data') }}</h3>
         </template>
 
         <div>
-          即將刪除 PDF 文件、對話紀錄
+          {{ t('clear-data-message') }}
         </div>
 
         <template #footer>
           <div class="flex justify-end">
-            <UButton class="mr-4" @click="showRemoveDataConfirmModal = false">先不要</UButton>
-            <UButton @click="removeData">確定</UButton>
+            <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
+            <UButton @click="clearData">{{ t('confirm') }}</UButton>
           </div>
         </template>
       </UCard>

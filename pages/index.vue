@@ -266,7 +266,7 @@ async function refreshStore(key: string) {
           <UInput class="flex-grow" v-model="input" :placeholder="t('input-placeholder')"
             :disabled="answerLoading || fileUploading">
           </UInput>
-          <UButton :loading="answerLoading" class="ml-2" :disabled="fileUploading">
+          <UButton :loading="answerLoading" class="ml-2" :disabled="fileUploading" type="submit">
             Enter
           </UButton>
         </form>

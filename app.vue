@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout>
-    <NuxtPage class="max-h-screen bg-black color-zinc-100" />
+    <NuxtPage class="max-h-screen" />
   </NuxtLayout>
   <UNotifications />
 </template>
@@ -25,13 +25,3 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
 })
 </script>
-
-<style>
-html {
-  background-color: black;
-}
-
-body {
-  margin: 0;
-}
-</style>

@@ -206,6 +206,16 @@ async function refreshStore(key: string) {
     description: t('open-ai-key-success')
   })
 }
+
+const colorMode = useColorMode()
+const isDark = computed({
+  get () {
+    return colorMode.value === 'dark'
+  },
+  set () {
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+  }
+})
 </script>
 
 <template>
@@ -213,6 +223,18 @@ async function refreshStore(key: string) {
     <header class="py-2 px-4 z-10 flex justify-between">
       <div class="grid place-items-center font-bold">AskPDF</div>
       <div class="flex justify-end items-center">
+        <ClientOnly>
+    <UButton
+      :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+      color="gray"
+      variant="ghost"
+      aria-label="Theme"
+      @click="isDark = !isDark"
+    />
+    <template #fallback>
+      <div class="w-8 h-8" />
+    </template>
+  </ClientOnly>
         <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
           {{ t('clear-data') }}
         </UButton>
@@ -225,7 +247,7 @@ async function refreshStore(key: string) {
         <LangSelector />
       </div>
     </header>
-    <div class="grid grid-cols-6 gap-2 pb-2">
+    <div class="grid grid-cols-6 gap-2 pb-2 px-2">
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
         <client-only fallback-tag="span" fallback="">
           <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdfSrc="pdfSrc" />

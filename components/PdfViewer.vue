@@ -1,6 +1,6 @@
 <template>
   <div class="h-full relative">
-    <div class="h-[6%] flex justify-between items-center py-1 bg-zinc-800">
+    <div class="h-[6%] flex justify-between items-center py-1 bg-zinc-300 dark:bg-zinc-800">
       <div class="flex justify-center items-center">
         <UButton icon="i-heroicons-chevron-up" size="sm" color="primary" square variant="ghost"
           class="mx-1" @click="setPageHandler(pageNum - 1)" :disabled="!props.pdfSrc" />
@@ -15,7 +15,7 @@
           class="mx-1" @click="setPageHandler(pageNum + 1)" :disabled="!props.pdfSrc" />
       </div>
     </div>
-    <div id="main-container" class="absolute left-0 bottom-0 w-full h-[94%] grid place-items-center bg-zinc-700">
+    <div id="main-container" class="absolute left-0 bottom-0 w-full h-[94%] grid place-items-center bg-zinc-200 dark:bg-zinc-700">
       <div id="viewer-container" class="grid place-items-center"></div>
     </div>
   </div>

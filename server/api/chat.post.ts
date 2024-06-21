@@ -16,9 +16,10 @@ export default defineEventHandler(async (event) => {
     messages: ChatCompletionMessageParam[]
   }>(event)
   const openai = useOpenAI(event)
+  const slicedMessages = messages.slice(-10)
   const response = await openai.chat.completions.create({
     model: 'gpt-4',
-    messages: [{ role: 'system', content: systemInput }, ...messages],
+    messages: slicedMessages,
     stream: true
   })
 

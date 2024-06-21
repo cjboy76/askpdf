@@ -7,7 +7,9 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { useStorage } from '@vueuse/core'
 
+const storageLocale = useStorage('askpdf-locale', 'en-US')
 const { locale, t } = useI18n()
 
 const items = [
@@ -25,5 +27,12 @@ const items = [
 
 function setLocale(value: string) {
     locale.value = value
+    storageLocale.value = value
 }
+
+onMounted(() => {
+    if (storageLocale.value && storageLocale.value !== locale.value) {
+        locale.value = storageLocale.value
+    }
+})
 </script>

@@ -209,10 +209,10 @@ async function refreshStore(key: string) {
 
 const colorMode = useColorMode()
 const isDark = computed({
-  get () {
+  get() {
     return colorMode.value === 'dark'
   },
-  set () {
+  set() {
     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
   }
 })
@@ -224,17 +224,12 @@ const isDark = computed({
       <div class="grid place-items-center font-bold">AskPDF</div>
       <div class="flex justify-end items-center">
         <ClientOnly>
-    <UButton
-      :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
-      color="gray"
-      variant="ghost"
-      aria-label="Theme"
-      @click="isDark = !isDark"
-    />
-    <template #fallback>
-      <div class="w-8 h-8" />
-    </template>
-  </ClientOnly>
+          <UButton class="mx-1" :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'" color="gray"
+            variant="ghost" aria-label="Theme" @click="isDark = !isDark" />
+          <template #fallback>
+            <div class="w-8 h-8" />
+          </template>
+        </ClientOnly>
         <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
           {{ t('clear-data') }}
         </UButton>
@@ -244,7 +239,7 @@ const isDark = computed({
         <UButton text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
           {{ t('upload-file') }}
         </UButton>
-        <LangSelector />
+        <LangSelector class="mx-1" />
       </div>
     </header>
     <div class="grid grid-cols-6 gap-2 pb-2 px-2">

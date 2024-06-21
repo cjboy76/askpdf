@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout>
-    <NuxtPage class="h-screen bg-zinc-800 color-zinc-100" />
+    <NuxtPage class="max-h-screen bg-black color-zinc-100" />
   </NuxtLayout>
   <UNotifications />
 </template>
@@ -28,7 +28,7 @@ useSeoMeta({
 
 <style>
 html {
-  background-color: rgb(39 39 42);
+  background-color: black;
 }
 
 body {

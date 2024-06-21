@@ -209,127 +209,134 @@ async function refreshStore(key: string) {
 </script>
 
 <template>
-  <div class="grid grid-cols-6">
-    <div class="col-span-3 h-full flex flex-col flex-grow relative">
-      <client-only fallback-tag="span" fallback="">
-        <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdfSrc="pdfSrc" />
-        <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          d(`･∀･)b
-        </div>
-      </client-only>
-    </div>
-    <div class="col-span-3 flex flex-col h-full">
-      <div class="max-h-[calc(100vh-80px)] overflow-y-auto flex flex-col flex-grow">
-        <div class="sticky top-0 py-4 px-4 z-10 flex justify-end items-center bg-zinc-800">
-          <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
-            {{ t('clear-data') }}
-          </UButton>
-          <UButton text class="mx-1" @click="showKeyModal = true" :disabled="fileUploading">
-            {{ t('open-ai-key') }}
-          </UButton>
-          <UButton text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
-            {{ t('upload-file') }}
-          </UButton>
-          <LangSelector />
-        </div>
-        <div v-if="!fileDB" class="text-center mt-20">
-          <h1 class="text-4xl font-bold text-center mb-4 opacity-50">AskPDF</h1>
-          <h3 v-if="!pdfSrc" class="font-bold text-center mb-4 opacity-50">
-            {{ t('greeting') }}
-          </h3>
-        </div>
-        <div v-for="{ content, role, id } of messages" :key="id" v-show="role !== 'system'">
-          <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
-            <div class="col-span-1 flex justify-end">
-              <UIcon v-if="role === 'assistant'" class="w-8 h-8" name="i-heroicons-face-smile-16-solid" />
-              <UIcon v-if="role === 'user'" class="w-8 h-8" name="i-heroicons-user-solid" />
-            </div>
-            <div class="col-span-7">
-              <div class="h-8 mb-2 grid items-center font-bold">
-                {{ role === 'assistant' ? 'AskPDF' : 'You' }}
-              </div>
-              <p>
-                {{ content }}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div ref="pageLinkElement" v-show="!answerLoading" class="w-3/5 mx-auto pb-10">
-          <span v-for="(page, index) of relatedPagesSet" :key="index"
-            class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
-            @click="viewerRef.setViewerPage(page)">
-            #{{ page }}</span>
-        </div>
-      </div>
-      <div class="h-12 pt-2 relative">
-        <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
-          <UInput class="flex-grow" v-model="input" :placeholder="t('input-placeholder')"
-            :disabled="answerLoading || fileUploading">
-          </UInput>
-          <UButton :loading="answerLoading" class="ml-2" :disabled="fileUploading" type="submit">
-            Enter
-          </UButton>
-        </form>
-        <UButton v-show="!pageLinkElementIsVisible" circle
-          class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" @click="scrollToBottom"
-          icon="i-heroicons-chevron-down">
+  <div class="flex flex-col">
+    <header class="py-2 px-4 z-10 flex justify-between">
+      <div class="grid place-items-center font-bold">AskPDF</div>
+      <div class="flex justify-end items-center">
+        <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
+          {{ t('clear-data') }}
         </UButton>
+        <UButton text class="mx-1" @click="showKeyModal = true" :disabled="fileUploading">
+          {{ t('open-ai-key') }}
+        </UButton>
+        <UButton text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
+          {{ t('upload-file') }}
+        </UButton>
+        <LangSelector />
       </div>
-      <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
+    </header>
+    <div class="grid grid-cols-6 gap-2 pb-2">
+      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
+        <client-only fallback-tag="span" fallback="">
+          <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdfSrc="pdfSrc" />
+          <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div class="font-bold text-center mb-4 opacity-50">
+              {{ t('greeting') }}
+            </div>
+            <div class="text-center opacity-50">
+              d(`･∀･)b
+            </div>
+          </div>
+        </client-only>
+      </div>
+      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
+        <div class="overflow-y-auto flex flex-col flex-grow">
+          <div v-for="{ content, role, id } of messages" :key="id" v-show="role !== 'system'">
+            <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
+              <div class="col-span-1 flex justify-end">
+                <UIcon v-if="role === 'assistant'" class="w-8 h-8" name="i-heroicons-face-smile-16-solid" />
+                <UIcon v-if="role === 'user'" class="w-8 h-8" name="i-heroicons-user-solid" />
+              </div>
+              <div class="col-span-7">
+                <div class="h-8 mb-2 grid items-center font-bold">
+                  {{ role === 'assistant' ? 'AskPDF' : t('you') }}
+                </div>
+                <p>
+                  {{ content }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div ref="pageLinkElement" v-show="!answerLoading" class="w-3/5 mx-auto pb-10">
+            <span v-for="(page, index) of relatedPagesSet" :key="index"
+              class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
+              @click="viewerRef.setViewerPage(page)">
+              #{{ page }}</span>
+          </div>
+        </div>
+        <div class="h-12 pt-2 relative">
+          <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
+            <UInput class="flex-grow" v-model="input" :placeholder="t('input-placeholder')"
+              :disabled="answerLoading || fileUploading">
+            </UInput>
+            <UButton :loading="answerLoading" class="ml-2" :disabled="fileUploading" type="submit">
+              Enter
+            </UButton>
+          </form>
+          <UButton v-show="!pageLinkElementIsVisible" circle
+            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" @click="scrollToBottom"
+            icon="i-heroicons-chevron-down">
+          </UButton>
+        </div>
+        <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
+      </div>
+      <UModal v-model="showFileModal" :style="{ width: '25rem' }">
+        <UCard>
+          <template #header>
+            <div>{{ t('upload-file') }}</div>
+          </template>
+          <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf"
+            @change="onFileSelect">
+          </UInput>
+          <template #footer>
+            <div class="flex justify-end">
+              <UButton text class="mr-4" @click="showFileModal = false">{{ t('cancel') }}</UButton>
+              <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
+            </div>
+          </template>
+
+        </UCard>
+      </UModal>
+      <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
+        <UCard>
+          <template #header>
+            <div>{{ t('open-ai-key') }}</div>
+          </template>
+          <div class="mb-4">
+            <a class="underline" target="_blank"
+              href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
+                t('open-ai-key-message') }}</a>
+          </div>
+          <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
+          <template #footer>
+
+            <div class="flex justify-end">
+              <UButton text @click="showKeyModal = false">{{ t('close') }}</UButton>
+            </div>
+
+          </template>
+        </UCard>
+      </UModal>
+      <UModal v-model="showClearDataConfirmModal">
+        <UCard>
+          <template #header>
+            <h3>{{ t('clear-data') }}</h3>
+          </template>
+
+          <div>
+            {{ t('clear-data-message') }}
+          </div>
+
+          <template #footer>
+            <div class="flex justify-end">
+              <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
+              <UButton @click="clearData">{{ t('confirm') }}</UButton>
+            </div>
+          </template>
+        </UCard>
+      </UModal>
     </div>
-    <UModal v-model="showFileModal" :style="{ width: '25rem' }">
-      <UCard>
-        <template #header>
-          <div>{{ t('upload-file') }}</div>
-        </template>
-        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf" @change="onFileSelect">
-        </UInput>
-        <template #footer>
-          <div class="flex justify-end">
-            <UButton text class="mr-4" @click="showFileModal = false">{{ t('cancel') }}</UButton>
-            <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
-          </div>
-        </template>
 
-      </UCard>
-    </UModal>
-    <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
-      <UCard>
-        <template #header>
-          <div>{{ t('open-ai-key') }}</div>
-        </template>
-        <div class="mb-4">
-          <a class="underline" target="_blank"
-            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
-              t('open-ai-key-message')}}</a>
-        </div>
-        <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
-        <template #footer>
-
-          <div class="flex justify-end">
-            <UButton text @click="showKeyModal = false">{{ t('close') }}</UButton>
-          </div>
-
-        </template>
-      </UCard>
-    </UModal>
-    <UModal v-model="showClearDataConfirmModal">
-      <UCard>
-        <template #header>
-          <h3>{{ t('clear-data') }}</h3>
-        </template>
-
-        <div>
-          {{ t('clear-data-message') }}
-        </div>
-
-        <template #footer>
-          <div class="flex justify-end">
-            <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
-            <UButton @click="clearData">{{ t('confirm') }}</UButton>
-          </div>
-        </template>
-      </UCard>
-    </UModal>
   </div>
+
 </template>

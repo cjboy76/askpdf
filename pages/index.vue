@@ -297,7 +297,10 @@ const isDark = computed({
         </div>
         <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
       </div>
-      <UModal v-model="showFileModal" :style="{ width: '25rem' }">
+    </div>
+  </div>
+
+  <UModal v-model="showFileModal" :style="{ width: '25rem' }">
         <UCard>
           <template #header>
             <div>{{ t('upload-file') }}</div>
@@ -328,7 +331,7 @@ const isDark = computed({
           <template #footer>
 
             <div class="flex justify-end">
-              <UButton text @click="showKeyModal = false">{{ t('close') }}</UButton>
+              <UButton text @click="showKeyModal = false">{{ t('confirm') }}</UButton>
             </div>
 
           </template>
@@ -352,8 +355,5 @@ const isDark = computed({
           </template>
         </UCard>
       </UModal>
-    </div>
-
-  </div>
 
 </template>

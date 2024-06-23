@@ -7,7 +7,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'AskPDF',
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.png' }]
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.png' }],
+      htmlAttrs: {
+        lang: 'en',
+      }
     }
   },
   nitro: {
@@ -17,7 +20,7 @@ export default defineNuxtConfig({
       }
     }
   },
-  modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui', 'nuxt-gtag'],
+  modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui', "nuxt-security"],
   vite: {
     plugins: [topLevelAwait()]
   },

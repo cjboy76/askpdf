@@ -22,7 +22,11 @@ export default defineNuxtConfig({
   },
   modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui', "nuxt-security"],
   vite: {
-    plugins: [topLevelAwait()]
+    plugins: [topLevelAwait()],
+    define: {
+      __INTLIFY_JIT_COMPILATION__: true,
+      __INTLIFY_DROP_MESSAGE_COMPILER__: true
+    }
   },
   build: {
     transpile: ['nuxt']

@@ -9,7 +9,7 @@ export default defineNuxtConfig({
       title: 'AskPDF',
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.png' }],
       htmlAttrs: {
-        lang: 'en',
+        lang: 'en'
       }
     }
   },
@@ -20,7 +20,13 @@ export default defineNuxtConfig({
       }
     }
   },
-  modules: ['@vueuse/nuxt', 'nuxt-auth-utils', '@nuxt/ui', "nuxt-security"],
+  modules: [
+    '@vueuse/nuxt',
+    'nuxt-auth-utils',
+    '@nuxt/ui',
+    'nuxt-security',
+    '@nuxtjs/i18n'
+  ],
   vite: {
     plugins: [topLevelAwait()],
     define: {
@@ -30,5 +36,17 @@ export default defineNuxtConfig({
   },
   build: {
     transpile: ['nuxt']
+  },
+  i18n: {
+    locales: ['en-US', 'zh'],
+    vueI18n: './i18n.config.ts' // if you are using custom path, default
+  },
+  security: {
+    headers: {
+      contentSecurityPolicy: {
+        'img-src': "'self' blob: data:;",
+        'connect-src': "'self' http://localhost:3000 blob: https://api.openai.com;",
+      },
+    },
   },
 })

@@ -298,62 +298,62 @@ const isDark = computed({
         <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
       </div>
     </div>
+    <UModal v-model="showFileModal" :style="{ width: '25rem' }">
+      <UCard>
+        <template #header>
+          <div>{{ t('upload-file') }}</div>
+        </template>
+        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf" @change="onFileSelect">
+        </UInput>
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton text class="mr-4" @click="showFileModal = false">{{ t('cancel') }}</UButton>
+            <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
+          </div>
+        </template>
+
+      </UCard>
+    </UModal>
+    <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
+      <UCard>
+        <template #header>
+          <div>{{ t('open-ai-key') }}</div>
+        </template>
+        <div class="mb-4">
+          <a class="underline" target="_blank"
+            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
+              t('open-ai-key-message') }}</a>
+        </div>
+        <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
+        <template #footer>
+
+          <div class="flex justify-end">
+            <UButton text @click="showKeyModal = false">{{ t('confirm') }}</UButton>
+          </div>
+
+        </template>
+      </UCard>
+    </UModal>
+    <UModal v-model="showClearDataConfirmModal">
+      <UCard>
+        <template #header>
+          <h3>{{ t('clear-data') }}</h3>
+        </template>
+
+        <div>
+          {{ t('clear-data-message') }}
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
+            <UButton @click="clearData">{{ t('confirm') }}</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
   </div>
 
-  <UModal v-model="showFileModal" :style="{ width: '25rem' }">
-        <UCard>
-          <template #header>
-            <div>{{ t('upload-file') }}</div>
-          </template>
-          <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf"
-            @change="onFileSelect">
-          </UInput>
-          <template #footer>
-            <div class="flex justify-end">
-              <UButton text class="mr-4" @click="showFileModal = false">{{ t('cancel') }}</UButton>
-              <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
-            </div>
-          </template>
 
-        </UCard>
-      </UModal>
-      <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
-        <UCard>
-          <template #header>
-            <div>{{ t('open-ai-key') }}</div>
-          </template>
-          <div class="mb-4">
-            <a class="underline" target="_blank"
-              href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
-                t('open-ai-key-message') }}</a>
-          </div>
-          <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
-          <template #footer>
-
-            <div class="flex justify-end">
-              <UButton text @click="showKeyModal = false">{{ t('confirm') }}</UButton>
-            </div>
-
-          </template>
-        </UCard>
-      </UModal>
-      <UModal v-model="showClearDataConfirmModal">
-        <UCard>
-          <template #header>
-            <h3>{{ t('clear-data') }}</h3>
-          </template>
-
-          <div>
-            {{ t('clear-data-message') }}
-          </div>
-
-          <template #footer>
-            <div class="flex justify-end">
-              <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
-              <UButton @click="clearData">{{ t('confirm') }}</UButton>
-            </div>
-          </template>
-        </UCard>
-      </UModal>
 
 </template>

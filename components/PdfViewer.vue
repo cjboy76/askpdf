@@ -30,8 +30,7 @@ const props = defineProps({
 })
 const pageNum = ref(1)
 const pages = ref(0)
-
-let pdfViewer: CustomPDFViewer
+const pdfViewer = new CustomPDFViewer()
 
 function setPageHandler(v: number) {
   const page = pageRangeHandler(v)
@@ -46,7 +45,6 @@ function pageRangeHandler(value: number) {
 }
 
 watchEffect(async () => {
-  if (!pdfViewer) pdfViewer = new CustomPDFViewer()
   await pdfViewer.setPdf(props.pdfSrc || '')
   pages.value = pdfViewer.numPages()
 

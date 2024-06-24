@@ -11,11 +11,10 @@ export class CustomPDFViewer {
   constructor() {
     this.pdfSrc = ''
     this.PDFDocument = null
-    this.setupinstance()
   }
 
   async setPdf(src: string) {
-    if (this.PDFViewer) this.PDFViewer._resetView()
+    if (!this.PDFViewer) await this.setupinstance()
     this.pdfSrc = src
     const PDFDocument = await pdfjs.getDocument(this.pdfSrc).promise.then((PDFDocument) => PDFDocument)
     this.PDFViewer.setDocument(PDFDocument)

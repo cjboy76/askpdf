@@ -342,21 +342,21 @@ async function refreshStore(key: string) {
     <UModal v-model="showSettingModal" prevent-close>
       <UCard>
         <template #header>
-          <h3>設定</h3>
+          <h3>{{ t('settings') }}</h3>
         </template>
         <div class="mb-4">
-          <h5 class="text-white text-opacity-50 mb-1">Embedding models</h5>
+          <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">Embedding models</h5>
           <USelect v-model="seletedEmbeddingModel"
             :options="['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']" />
 
         </div>
         <div class="mb-4">
-          <h5 class="text-white text-opacity-50 mb-1">Chat models</h5>
+          <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">Chat models</h5>
           <USelect v-model="selectedChatModel" :options="['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']" />
 
         </div>
         <div class="mb-4">
-          <h5 class="text-white text-opacity-50 mb-1">OpenAI API Key
+          <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">OpenAI API Key
 
           </h5>
           <UInput placeholder="API Key" v-model="storageOpenAIKey" />

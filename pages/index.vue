@@ -168,7 +168,7 @@ async function refreshFromCache() {
 
   const docsFromStore = await get('askpdf-docs')
   if (docsFromStore && storageOpenAIKey.value) {
-    vectorStore = createVectorStore({openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value})
+    vectorStore = createVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
     vectorStore.addDocuments(docsFromStore)
   }
 
@@ -178,7 +178,7 @@ async function refreshFromCache() {
 }
 onMounted(() => {
   if (storageOpenAIKey.value) {
-    vectorStore = createVectorStore({openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value})
+    vectorStore = createVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
   }
   refreshFromCache()
 })
@@ -200,15 +200,6 @@ async function clearData() {
   showClearDataConfirmModal.value = false
 }
 
-async function refreshStore(key: string) {
-  vectorStore = createVectorStore({openAIApiKey: key, modelName: seletedEmbeddingModel.value})
-  if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
-  toast.add({
-    title: 'Success',
-    description: t('open-ai-key-success')
-  })
-}
-
 const colorMode = useColorMode()
 const isDark = computed({
   get() {
@@ -220,14 +211,20 @@ const isDark = computed({
 })
 
 const showSettingModal = ref(false)
-const seletedEmbeddingModel = ref<'text-embedding-3-small'| 'text-embedding-3-large'| 'text-embedding-ada-002'>('text-embedding-3-small')
+const seletedEmbeddingModel = ref<'text-embedding-3-small' | 'text-embedding-3-large' | 'text-embedding-ada-002'>('text-embedding-3-small')
 const selectedChatModel = ref<'gpt-4o' | 'gpt-4-turbo' | 'gpt-4' | 'gpt-3.5-turbo'>('gpt-4o')
 
+watch(storageOpenAIKey, (newValue, oldValue) => {
+  if (newValue !== oldValue) refreshStore(newValue)
+})
 
-function closeSettingHandler() {
-  refreshStore(storageOpenAIKey.value)
-  showSettingModal.value = false
-
+async function refreshStore(key: string) {
+  vectorStore = createVectorStore({ openAIApiKey: key, modelName: seletedEmbeddingModel.value })
+  if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
+  toast.add({
+    title: 'Success',
+    description: t('open-ai-key-success')
+  })
 }
 </script>
 
@@ -247,7 +244,7 @@ function closeSettingHandler() {
           {{ t('upload-file') }}
         </UButton>
         <UButton text class="mx-1" @click="showSettingModal = true" :disabled="fileUploading">
-          Settings
+          {{ t('settings') }}
         </UButton>
         <LangSelector class="mx-1" />
       </div>
@@ -349,7 +346,8 @@ function closeSettingHandler() {
         </template>
         <div class="mb-4">
           <h5 class="text-white text-opacity-50 mb-1">Embedding models</h5>
-          <USelect v-model="seletedEmbeddingModel" :options="['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']" />
+          <USelect v-model="seletedEmbeddingModel"
+            :options="['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']" />
 
         </div>
         <div class="mb-4">
@@ -359,13 +357,13 @@ function closeSettingHandler() {
         </div>
         <div class="mb-4">
           <h5 class="text-white text-opacity-50 mb-1">OpenAI API Key
-           
+
           </h5>
-          <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
+          <UInput placeholder="API Key" v-model="storageOpenAIKey" />
           <div class="flex justify-end">
             <a class="text-sm text-white text-opacity-50 mt-2 hover:underline text-right" target="_blank"
-            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
-              t('open-ai-key-message') + '?' }}</a>
+              href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
+                t('open-ai-key-message') + '?' }}</a>
           </div>
         </div>
         <UDivider class="my-4"></UDivider>
@@ -374,9 +372,9 @@ function closeSettingHandler() {
         </UButton>
         <template #footer>
           <div class="flex justify-end">
-            <UButton @click="closeSettingHandler">{{
+            <UButton @click="showSettingModal = false">{{
               t('close')
-            }}</UButton>
+              }}</UButton>
           </div>
         </template>
       </UCard>

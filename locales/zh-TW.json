@@ -14,5 +14,6 @@
     "open-ai-key-success": "OpenAI API key 已更新",
     "open-ai-key-required": "請設定 OpenAI API Key",
     "upload-file-error": "上傳檔案失敗，請確認檔案類型",
-    "you": "你"
+    "you": "你",
+    "settings": "設定"
 }

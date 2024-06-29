@@ -7,7 +7,7 @@ import { pdfToBase64 } from '~/utils/parser'
 import { get } from 'idb-keyval'
 import { createDocuments, CustomVectorStore } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
-import { useVectorStore } from '~/utils/vectorStore'
+import { createVectorStore } from '~/utils/vectorStore'
 import { usePDFLoader } from '~/utils/pdfloader'
 import { useI18n } from 'vue-i18n'
 
@@ -31,7 +31,6 @@ const {
 
 let vectorStore: CustomVectorStore
 const showFileModal = ref(false)
-const showKeyModal = ref(false)
 const uploadFile = ref()
 
 const onFileSelect = (files: FileList) => {
@@ -130,7 +129,10 @@ async function submitHandler(e: Event) {
       options: {
         headers: {
           'x-openai-key': storageOpenAIKey.value
-        }
+        },
+      },
+      data: {
+        model: selectedChatModel.value,
       }
     })
   } catch (error: unknown) {
@@ -166,7 +168,7 @@ async function refreshFromCache() {
 
   const docsFromStore = await get('askpdf-docs')
   if (docsFromStore && storageOpenAIKey.value) {
-    vectorStore = useVectorStore(storageOpenAIKey.value)
+    vectorStore = createVectorStore({openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value})
     vectorStore.addDocuments(docsFromStore)
   }
 
@@ -176,7 +178,7 @@ async function refreshFromCache() {
 }
 onMounted(() => {
   if (storageOpenAIKey.value) {
-    vectorStore = useVectorStore(storageOpenAIKey.value)
+    vectorStore = createVectorStore({openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value})
   }
   refreshFromCache()
 })
@@ -199,7 +201,7 @@ async function clearData() {
 }
 
 async function refreshStore(key: string) {
-  vectorStore = useVectorStore(key)
+  vectorStore = createVectorStore({openAIApiKey: key, modelName: seletedEmbeddingModel.value})
   if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
   toast.add({
     title: 'Success',
@@ -216,6 +218,17 @@ const isDark = computed({
     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
   }
 })
+
+const showSettingModal = ref(false)
+const seletedEmbeddingModel = ref<'text-embedding-3-small'| 'text-embedding-3-large'| 'text-embedding-ada-002'>('text-embedding-3-small')
+const selectedChatModel = ref<'gpt-4o' | 'gpt-4-turbo' | 'gpt-4' | 'gpt-3.5-turbo'>('gpt-4o')
+
+
+function closeSettingHandler() {
+  refreshStore(storageOpenAIKey.value)
+  showSettingModal.value = false
+
+}
 </script>
 
 <template>
@@ -230,14 +243,11 @@ const isDark = computed({
             <div class="w-8 h-8" />
           </template>
         </ClientOnly>
-        <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
-          {{ t('clear-data') }}
-        </UButton>
-        <UButton text class="mx-1" @click="showKeyModal = true" :disabled="fileUploading">
-          {{ t('open-ai-key') }}
-        </UButton>
         <UButton text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
           {{ t('upload-file') }}
+        </UButton>
+        <UButton text class="mx-1" @click="showSettingModal = true" :disabled="fileUploading">
+          Settings
         </UButton>
         <LangSelector class="mx-1" />
       </div>
@@ -298,7 +308,7 @@ const isDark = computed({
         <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
       </div>
     </div>
-    <UModal v-model="showFileModal" :style="{ width: '25rem' }">
+    <UModal v-model="showFileModal" :style="{ width: '25rem' }" prevent-close>
       <UCard>
         <template #header>
           <div>{{ t('upload-file') }}</div>
@@ -312,26 +322,6 @@ const isDark = computed({
           </div>
         </template>
 
-      </UCard>
-    </UModal>
-    <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
-      <UCard>
-        <template #header>
-          <div>{{ t('open-ai-key') }}</div>
-        </template>
-        <div class="mb-4">
-          <a class="underline" target="_blank"
-            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
-              t('open-ai-key-message') }}</a>
-        </div>
-        <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
-        <template #footer>
-
-          <div class="flex justify-end">
-            <UButton text @click="showKeyModal = false">{{ t('confirm') }}</UButton>
-          </div>
-
-        </template>
       </UCard>
     </UModal>
     <UModal v-model="showClearDataConfirmModal">
@@ -348,6 +338,45 @@ const isDark = computed({
           <div class="flex justify-end">
             <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
             <UButton @click="clearData">{{ t('confirm') }}</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
+    <UModal v-model="showSettingModal" prevent-close>
+      <UCard>
+        <template #header>
+          <h3>設定</h3>
+        </template>
+        <div class="mb-4">
+          <h5 class="text-white text-opacity-50 mb-1">Embedding models</h5>
+          <USelect v-model="seletedEmbeddingModel" :options="['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']" />
+
+        </div>
+        <div class="mb-4">
+          <h5 class="text-white text-opacity-50 mb-1">Chat models</h5>
+          <USelect v-model="selectedChatModel" :options="['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']" />
+
+        </div>
+        <div class="mb-4">
+          <h5 class="text-white text-opacity-50 mb-1">OpenAI API Key
+           
+          </h5>
+          <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
+          <div class="flex justify-end">
+            <a class="text-sm text-white text-opacity-50 mt-2 hover:underline text-right" target="_blank"
+            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
+              t('open-ai-key-message') + '?' }}</a>
+          </div>
+        </div>
+        <UDivider class="my-4"></UDivider>
+        <UButton color="red" block @click="showClearDataConfirmModal = true">
+          {{ t('clear-data') }}
+        </UButton>
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton @click="closeSettingHandler">{{
+              t('close')
+            }}</UButton>
           </div>
         </template>
       </UCard>

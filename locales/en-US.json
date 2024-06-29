@@ -14,5 +14,6 @@
     "open-ai-key-success": "OpenAI API key has been updated",
     "open-ai-key-required": "Please set the OpenAI API Key",
     "upload-file-error": "Failed to upload file, please check the file type",
-    "you": "You"
+    "you": "You",
+    "settings": "Settings"
 }

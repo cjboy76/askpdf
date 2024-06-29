@@ -12,7 +12,7 @@ interface InMemoryVector {
   metadata: Record<string, any>
 }
 
-export interface CustomVectorStoreArgs {}
+export interface CustomVectorStoreArgs { }
 
 export class CustomVectorStore extends VectorStore {
   declare FilterType: (doc: Document) => boolean
@@ -117,18 +117,20 @@ export class CustomVectorStore extends VectorStore {
   }
 }
 
-let _vector_store: CustomVectorStore
+type VectorStoreConfig = {
+  openAIApiKey: string,
+  modelName: string
+}
 
-export function useVectorStore(openAIApiKey: string) {
-  if (!_vector_store) {
-    _vector_store = new CustomVectorStore(
-      new OpenAIEmbeddings({
-        openAIApiKey
-      })
-    )
-  }
 
-  return _vector_store
+export function createVectorStore(config: VectorStoreConfig) {
+  const { openAIApiKey = '', modelName = 'gpt-4o' } = config
+  return new CustomVectorStore(
+    new OpenAIEmbeddings({
+      openAIApiKey,
+      modelName
+    })
+  )
 }
 
 const splitter = new RecursiveCharacterTextSplitter({
@@ -153,5 +155,5 @@ export async function createDocuments(data: PageContent[]) {
     },
     []
   )
-  return documents 
+  return documents
 }

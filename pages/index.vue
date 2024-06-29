@@ -31,7 +31,6 @@ const {
 
 let vectorStore: CustomVectorStore
 const showFileModal = ref(false)
-const showKeyModal = ref(false)
 const uploadFile = ref()
 
 const onFileSelect = (files: FileList) => {
@@ -216,6 +215,9 @@ const isDark = computed({
     colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
   }
 })
+
+const showSettingModal = ref(false)
+const selectedModel = ref('openai')
 </script>
 
 <template>
@@ -224,8 +226,16 @@ const isDark = computed({
       <div class="grid place-items-center font-bold">AskPDF</div>
       <div class="flex justify-end items-center">
         <ClientOnly>
-          <UButton class="mx-1" :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'" color="gray"
-            variant="ghost" aria-label="Theme" @click="isDark = !isDark" />
+          <UButton
+            class="mx-1"
+            :icon="
+              isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'
+            "
+            color="gray"
+            variant="ghost"
+            aria-label="Theme"
+            @click="isDark = !isDark"
+          />
           <template #fallback>
             <div class="w-8 h-8" />
           </template>
@@ -233,36 +243,50 @@ const isDark = computed({
         <UButton text class="mx-1" @click="showClearDataConfirmModal = true">
           {{ t('clear-data') }}
         </UButton>
-        <UButton text class="mx-1" @click="showKeyModal = true" :disabled="fileUploading">
-          {{ t('open-ai-key') }}
-        </UButton>
-        <UButton text class="mx-1" @click="showFileModal = true" :disabled="fileUploading">
-          {{ t('upload-file') }}
+        <UButton text class="mx-1" @click="showSettingModal = true">
+          設定
         </UButton>
         <LangSelector class="mx-1" />
       </div>
     </header>
     <div class="grid grid-cols-6 gap-2 pb-2 px-2">
-      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
+      <div
+        class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded"
+      >
         <client-only fallback-tag="span" fallback="">
           <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdfSrc="pdfSrc" />
-          <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div
+            v-else
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
             <div class="font-bold text-center mb-4 opacity-50">
               {{ t('greeting') }}
             </div>
-            <div class="text-center opacity-50">
-              d(`･∀･)b
-            </div>
+            <div class="text-center opacity-50">d(`･∀･)b</div>
           </div>
         </client-only>
       </div>
-      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
+      <div
+        class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded"
+      >
         <div class="overflow-y-auto flex flex-col flex-grow">
-          <div v-for="{ content, role, id } of messages" :key="id" v-show="role !== 'system'">
+          <div
+            v-for="{ content, role, id } of messages"
+            :key="id"
+            v-show="role !== 'system'"
+          >
             <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
               <div class="col-span-1 flex justify-end">
-                <UIcon v-if="role === 'assistant'" class="w-8 h-8" name="i-heroicons-face-smile-16-solid" />
-                <UIcon v-if="role === 'user'" class="w-8 h-8" name="i-heroicons-user-solid" />
+                <UIcon
+                  v-if="role === 'assistant'"
+                  class="w-8 h-8"
+                  name="i-heroicons-face-smile-16-solid"
+                />
+                <UIcon
+                  v-if="role === 'user'"
+                  class="w-8 h-8"
+                  name="i-heroicons-user-solid"
+                />
               </div>
               <div class="col-span-7">
                 <div class="h-8 mb-2 grid items-center font-bold">
@@ -274,67 +298,80 @@ const isDark = computed({
               </div>
             </div>
           </div>
-          <div ref="pageLinkElement" v-show="!answerLoading" class="w-3/5 mx-auto pb-10">
-            <span v-for="(page, index) of relatedPagesSet" :key="index"
+          <div
+            ref="pageLinkElement"
+            v-show="!answerLoading"
+            class="w-3/5 mx-auto pb-10"
+          >
+            <span
+              v-for="(page, index) of relatedPagesSet"
+              :key="index"
               class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
-              @click="viewerRef.setViewerPage(page)">
-              #{{ page }}</span>
+              @click="viewerRef.setViewerPage(page)"
+            >
+              #{{ page }}</span
+            >
           </div>
         </div>
         <div class="h-12 pt-2 relative">
-          <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
-            <UInput class="flex-grow" v-model="input" :placeholder="t('input-placeholder')"
-              :disabled="answerLoading || fileUploading">
+          <form
+            class="w-5/6 max-w-2xl mx-auto flex"
+            @submit.prevent="submitHandler"
+          >
+            <UInput
+              class="flex-grow"
+              v-model="input"
+              :placeholder="t('input-placeholder')"
+              :disabled="answerLoading || fileUploading"
+            >
             </UInput>
-            <UButton :loading="answerLoading" class="ml-2" :disabled="fileUploading" type="submit">
+            <UButton
+              :loading="answerLoading"
+              class="ml-2"
+              :disabled="fileUploading"
+              type="submit"
+            >
               Enter
             </UButton>
           </form>
-          <UButton v-show="!pageLinkElementIsVisible" circle
-            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" @click="scrollToBottom"
-            icon="i-heroicons-chevron-down">
+          <UButton
+            v-show="!pageLinkElementIsVisible"
+            circle
+            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100"
+            @click="scrollToBottom"
+            icon="i-heroicons-chevron-down"
+          >
           </UButton>
         </div>
         <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
       </div>
     </div>
-    <UModal v-model="showFileModal" :style="{ width: '25rem' }">
+    <UModal v-model="showFileModal" :style="{ width: '25rem' }" prevent-close>
       <UCard>
         <template #header>
           <div>{{ t('upload-file') }}</div>
         </template>
-        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf" @change="onFileSelect">
+        <UInput
+          type="file"
+          icon="i-heroicons-folder"
+          class="flex justify-center"
+          accept=".pdf"
+          @change="onFileSelect"
+        >
         </UInput>
         <template #footer>
           <div class="flex justify-end">
-            <UButton text class="mr-4" @click="showFileModal = false">{{ t('cancel') }}</UButton>
-            <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
+            <UButton text class="mr-4" @click="showFileModal = false">{{
+              t('cancel')
+            }}</UButton>
+            <UButton text :disabled="!uploadFile" @click="uploadPdf">{{
+              t('confirm')
+            }}</UButton>
           </div>
-        </template>
-
-      </UCard>
-    </UModal>
-    <UModal v-model="showKeyModal" :style="{ width: '25rem' }">
-      <UCard>
-        <template #header>
-          <div>{{ t('open-ai-key') }}</div>
-        </template>
-        <div class="mb-4">
-          <a class="underline" target="_blank"
-            href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
-              t('open-ai-key-message') }}</a>
-        </div>
-        <UInput placeholder="API Key" v-model="storageOpenAIKey" @change="refreshStore(storageOpenAIKey)" />
-        <template #footer>
-
-          <div class="flex justify-end">
-            <UButton text @click="showKeyModal = false">{{ t('confirm') }}</UButton>
-          </div>
-
         </template>
       </UCard>
     </UModal>
-    <UModal v-model="showClearDataConfirmModal">
+    <UModal v-model="showClearDataConfirmModal" prevent-close>
       <UCard>
         <template #header>
           <h3>{{ t('clear-data') }}</h3>
@@ -346,14 +383,85 @@ const isDark = computed({
 
         <template #footer>
           <div class="flex justify-end">
-            <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
+            <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{
+              t('cancel')
+            }}</UButton>
             <UButton @click="clearData">{{ t('confirm') }}</UButton>
           </div>
         </template>
       </UCard>
     </UModal>
+    <UModal v-model="showSettingModal" prevent-close>
+      <UCard>
+        <template #header>
+          <h3>設定</h3>
+        </template>
+
+        <div>
+          <div
+            class="border-2 py-4 px-4 mb-4 rounded-lg cursor-pointer"
+            :class="{ 'opacity-50': selectedModel !== 'openai' }"
+            @click="selectedModel = 'openai'"
+          >
+            <div class="font-bold">OpenAI</div>
+            <p class="text-sm">
+              Select this to use your API key for making requests to OpenAI
+              services.
+            </p>
+            <a
+              class="text-sm"
+              :class="{ 'hover:underline': selectedModel === 'openai' }"
+              target="_blank"
+              href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"
+            >
+              {{ t('open-ai-key-message') }}</a
+            >
+            <UInput
+              class="mt-4"
+              placeholder="OpenAI API Key"
+              v-model="storageOpenAIKey"
+              :disabled="selectedModel !== 'openai'"
+              @change="refreshStore(storageOpenAIKey)"
+            />
+          </div>
+          <div
+            class="border-2 py-2 px-4 rounded-lg cursor-pointer"
+            :class="{ 'opacity-50': selectedModel !== 'ollama' }"
+            @click="selectedModel = 'ollama'"
+          >
+            <h3 class="font-bold">Ollama</h3>
+            <p class="text-sm">
+              Select this to connect to the Ollama LLM installed on your
+              computer for local processing and data privacy.
+            </p>
+            <a
+              href="https://ollama.com/"
+              class="text-sm"
+              target="_blank"
+              :class="{ 'hover:underline': selectedModel === 'ollama' }"
+              >Learn how to setup up ollama</a
+            >
+          </div>
+          <UDivider class="my-4" />
+
+          <UButton
+            color="red"
+            text
+            class="w-full flex justify-center"
+            @click="showClearDataConfirmModal = true"
+          >
+            {{ t('clear-data') }}
+          </UButton>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton @click="showSettingModal = false">{{
+              t('close')
+            }}</UButton>
+          </div>
+        </template>
+      </UCard>
+    </UModal>
   </div>
-
-
-
 </template>

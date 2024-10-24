@@ -1,35 +1,21 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
-import { useChat, type Message } from 'ai/vue'
+import { useChat, type Message } from '@ai-sdk/vue'
 import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
 import { pdfToBase64 } from '~/utils/parser'
 import { get } from 'idb-keyval'
-import { createDocuments, CustomVectorStore } from '#imports'
+import { createDocuments } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
-import { createVectorStore } from '~/utils/vectorStore'
 import { usePDFLoader } from '~/utils/pdfloader'
 import { useI18n } from 'vue-i18n'
+import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
 
 const { t } = useI18n()
 const toast = useToast()
 const storageOpenAIKey = useStorage('openai_key', '')
-const {
-  messages,
-  setMessages,
-  handleSubmit,
-  input,
-  isLoading: useChatLoading
-} = useChat({
-  onError: (error) => {
-    toast.add({
-      title: 'Error',
-      description: error.message
-    })
-  }
-})
 
-let vectorStore: CustomVectorStore
+let vectorStore: MemoryVectorStore
 const showFileModal = ref(false)
 const uploadFile = ref()
 
@@ -47,6 +33,24 @@ const { data: relatedPagesSet } = useIDBKeyval<number[]>(
   'askpdf-related-pages',
   []
 )
+
+const {
+  messages,
+  setMessages,
+  handleSubmit,
+  input,
+  isLoading: useChatLoading
+} = useChat({
+  api: '/api/chat',
+  initialMessages: messagesDB.value,
+  onError: (error) => {
+    console.log({error})
+    toast.add({
+      title: 'Error',
+      description: error.message
+    })
+  },
+})
 
 async function uploadPdf() {
   if (!storageOpenAIKey.value) {
@@ -126,13 +130,14 @@ async function submitHandler(e: Event) {
       }
     ])
     handleSubmit(e, {
-      options: {
-        headers: {
-          'x-openai-key': storageOpenAIKey.value
-        },
+      allowEmptySubmit: true,
+      headers: {
+        'x-openai-key': storageOpenAIKey.value
       },
-      data: {
-        model: selectedChatModel.value,
+      body: {
+        data: {
+          model: selectedChatModel.value,
+        }
       }
     })
   } catch (error: unknown) {
@@ -168,17 +173,20 @@ async function refreshFromCache() {
 
   const docsFromStore = await get('askpdf-docs')
   if (docsFromStore && storageOpenAIKey.value) {
-    vectorStore = createVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
+    vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
     vectorStore.addDocuments(docsFromStore)
   }
 
   const relatedPageNumFromStore = await get('askpdf-related-pages')
   if (relatedPageNumFromStore.length > 0)
     relatedPagesSet.value = relatedPageNumFromStore
+
+  scrollToBottom()
+  
 }
 onMounted(() => {
   if (storageOpenAIKey.value) {
-    vectorStore = createVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
+    vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
   }
   refreshFromCache()
 })
@@ -212,14 +220,14 @@ const isDark = computed({
 
 const showSettingModal = ref(false)
 const seletedEmbeddingModel = ref<'text-embedding-3-small' | 'text-embedding-3-large' | 'text-embedding-ada-002'>('text-embedding-3-small')
-const selectedChatModel = ref<'gpt-4o' | 'gpt-4-turbo' | 'gpt-4' | 'gpt-3.5-turbo'>('gpt-4o')
+const selectedChatModel = ref<'gpt-4o' | 'gpt-4-turbo' | 'gpt-4' | 'gpt-3.5-turbo' | 'gpt-4o-mini'>('gpt-4o-mini')
 
 watch(storageOpenAIKey, (newValue, oldValue) => {
   if (newValue !== oldValue) refreshStore(newValue)
 })
 
 async function refreshStore(key: string) {
-  vectorStore = createVectorStore({ openAIApiKey: key, modelName: seletedEmbeddingModel.value })
+  vectorStore = createMemoryVectorStore({ openAIApiKey: key, modelName: seletedEmbeddingModel.value })
   if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
   toast.add({
     title: 'Success',
@@ -281,7 +289,7 @@ async function refreshStore(key: string) {
               </div>
             </div>
           </div>
-          <div ref="pageLinkElement" v-show="!answerLoading" class="w-3/5 mx-auto pb-10">
+          <div ref="pageLinkElement" v-show="!answerLoading && messages.length" class="w-3/5 mx-auto pb-10">
             <span v-for="(page, index) of relatedPagesSet" :key="index"
               class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
               @click="viewerRef.setViewerPage(page)">
@@ -297,7 +305,7 @@ async function refreshStore(key: string) {
               Enter
             </UButton>
           </form>
-          <UButton v-show="!pageLinkElementIsVisible" circle
+          <UButton v-show="!pageLinkElementIsVisible && messages.length" circle
             class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" @click="scrollToBottom"
             icon="i-heroicons-chevron-down">
           </UButton>
@@ -352,7 +360,7 @@ async function refreshStore(key: string) {
         </div>
         <div class="mb-4">
           <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">Chat models</h5>
-          <USelect v-model="selectedChatModel" :options="['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']" />
+          <USelect v-model="selectedChatModel" :options="['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']" />
 
         </div>
         <div class="mb-4">

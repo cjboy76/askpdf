@@ -1,20 +1,27 @@
-import { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
-import { OpenAIStream, StreamingTextResponse } from 'ai'
-import { useOpenAI } from '../utils'
+import { streamText, convertToCoreMessages, Message } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
 
 export default defineEventHandler(async (event) => {
-  const { messages, data } = await readBody<{
-    messages: ChatCompletionMessageParam[],
-    data: { model: string }
-  }>(event)
-  console.log({data})
-  const openai = useOpenAI(event)
-  const slicedMessages = messages.slice(-10)
-  const response = await openai.chat.completions.create({
-    model: data.model,
-    messages: slicedMessages,
-    stream: true
-  })
-
-  return new StreamingTextResponse(OpenAIStream(response))
-})
+  try {
+    const apiKey = event.node.req.headers['x-openai-key']?.toString()
+    if (!apiKey) throw new Error('Missing OpenAI API key');
+  
+    const { messages, data: { model } } = await readBody<{
+      messages: Message[],
+      data: { model: string }
+    }>(event);
+    const openai = createOpenAI({
+      apiKey: apiKey,
+    });
+  
+    const result = await streamText({
+      model: openai(model),
+      messages: convertToCoreMessages(messages),
+    });
+  
+    return result.toDataStreamResponse();
+  } catch (error) {
+    console.log({error})
+    return ''
+  }
+});

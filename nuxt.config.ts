@@ -24,7 +24,6 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-auth-utils',
     '@nuxt/ui',
-    'nuxt-security',
     '@nuxtjs/i18n'
   ],
   vite: {
@@ -40,13 +39,5 @@ export default defineNuxtConfig({
   i18n: {
     locales: ['en-US', 'zh'],
     vueI18n: './i18n.config.ts' // if you are using custom path, default
-  },
-  security: {
-    headers: {
-      contentSecurityPolicy: {
-        'img-src': "'self' blob: data:;",
-        'connect-src': "'self' http://localhost:3000 blob: https://api.openai.com;",
-      },
-    },
   },
 })

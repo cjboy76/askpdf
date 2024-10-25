@@ -12,20 +12,17 @@ import { usePdfUploader } from '~/composables/usePdfUploader'
 import AppHeader from '~/components/AppHeader.vue'
 import { useAppModal } from '~/composables/useAppModal'
 import SettingsModal from '~/components/SettingsModal.vue'
+import FileModal from '~/components/FileModal.vue'
 import type { ChatModel } from 'openai/resources/index.mjs'
 import type { EmbeddingModel } from 'openai/src/resources/embeddings.js'
+import MessagesList from '~/components/MessagesList.vue'
 
 const { t } = useI18n()
 const toast = useToast()
 const storageOpenAIKey = useStorage('openai_key', '')
 
 let vectorStore: MemoryVectorStore
-const uploadFile = ref()
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
-
-const onFileSelect = (files: FileList) => {
-  if (files[0]) uploadFile.value = files[0]
-}
 const { isPending: isFileUploading, upload } = usePdfUploader()
 const { data: fileDB } = useIDBKeyval('askpdf-file', '')
 const { data: documentDB } = useIDBKeyval<TDocument<Record<string, any>>[]>(
@@ -55,7 +52,7 @@ const {
   },
 })
 
-async function uploadPdf() {
+async function uploadPdf(file: File) {
   if (!storageOpenAIKey.value) {
     toast.add({
       title: 'Info',
@@ -63,9 +60,6 @@ async function uploadPdf() {
     })
     return
   }
-  if (!uploadFile.value) return
-  const file = toRaw(uploadFile.value)
-  isFileModalOpen.value = false
   try {
     const res = await upload(file)
     if (!res) return
@@ -241,22 +235,7 @@ async function resetVectorStore() {
       </div>
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
         <div class="overflow-y-auto flex flex-col flex-grow">
-          <div v-for="{ content, role, id } of messages" :key="id" v-show="role !== 'system'">
-            <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
-              <div class="col-span-1 flex justify-end">
-                <UIcon v-if="role === 'assistant'" class="w-8 h-8" name="i-heroicons-face-smile-16-solid" />
-                <UIcon v-if="role === 'user'" class="w-8 h-8" name="i-heroicons-user-solid" />
-              </div>
-              <div class="col-span-7">
-                <div class="h-8 mb-2 grid items-center font-bold">
-                  {{ role === 'assistant' ? 'AskPDF' : t('you') }}
-                </div>
-                <p>
-                  {{ content }}
-                </p>
-              </div>
-            </div>
-          </div>
+          <MessagesList :messages="messages" />
           <div ref="pageLinkElement" v-show="!answerLoading && messages.length" class="w-3/5 mx-auto pb-10">
             <span v-for="(page, index) of relatedPagesSet" :key="index"
               class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
@@ -281,40 +260,7 @@ async function resetVectorStore() {
         <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
       </div>
     </div>
-    <UModal v-model="isFileModalOpen" :style="{ width: '25rem' }" prevent-close>
-      <UCard>
-        <template #header>
-          <div>{{ t('upload-file') }}</div>
-        </template>
-        <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf" @change="onFileSelect">
-        </UInput>
-        <template #footer>
-          <div class="flex justify-end">
-            <UButton text class="mr-4" @click="isFileModalOpen = false">{{ t('cancel') }}</UButton>
-            <UButton text :disabled="!uploadFile" @click="uploadPdf">{{ t('confirm') }}</UButton>
-          </div>
-        </template>
-
-      </UCard>
-    </UModal>
-    <UModal v-model="showClearDataConfirmModal">
-      <UCard>
-        <template #header>
-          <h3>{{ t('clear-data') }}</h3>
-        </template>
-
-        <div>
-          {{ t('clear-data-message') }}
-        </div>
-
-        <template #footer>
-          <div class="flex justify-end">
-            <UButton class="mr-4" @click="showClearDataConfirmModal = false">{{ t('cancel') }}</UButton>
-            <UButton @click="clearData">{{ t('confirm') }}</UButton>
-          </div>
-        </template>
-      </UCard>
-    </UModal>
+    <FileModal v-model="isFileModalOpen" @on-upload="uploadPdf" />
     <SettingsModal v-model:seleted-embedding-model="seletedEmbeddingModel" v-model:selected-chat-model="selectedChatModel" v-model="isSettingModalOpen" @clear-data="clearData" @on-close="resetVectorStore" />
   </div>
 </template>

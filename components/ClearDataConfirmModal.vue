@@ -1,4 +1,5 @@
-<script lang="ts">
+<script setup lang="ts">
+const { t } = useI18n()
 const model = defineModel({ default: false })
 const emit = defineEmits(['clearData'])
 
@@ -9,7 +10,7 @@ function onClearDataClick() {
 </script>
 
 <template>
-    <UModal v-model="model" prevent-close>
+    <UModal v-model="model">
         <UCard>
             <template #header>
                 <h3>{{ t('clear-data') }}</h3>

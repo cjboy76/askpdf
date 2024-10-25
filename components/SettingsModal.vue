@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core'
 import type { ChatModel, EmbeddingModel } from 'openai/resources/index.mjs';
+import { STATE_KEY } from '~/share';
 
 const chatModelOptions: ChatModel[] = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']
 const embeddingModelOptions: EmbeddingModel[] = ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
@@ -19,7 +20,7 @@ const seletedEmbeddingModel = defineModel('seletedEmbeddingModel', { default: 't
 const selectedChatModel = defineModel('selectedChatModel', { default: 'gpt-4o-mini'})
 
 const storageOpenAIKey = useStorage('openai_key', '')
-const isClearDataConfirmModalOpen = useState('toggle-clear-data-modal', () => false)
+const isClearDataConfirmModalOpen = useState(STATE_KEY.TOGGLE_CLEAR_DATA_MODAL, () => false)
 
 function onClearData() {
     emit('clearData')

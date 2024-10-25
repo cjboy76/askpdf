@@ -3,8 +3,6 @@ import { useStorage } from '@vueuse/core'
 import { useChat, type Message } from '@ai-sdk/vue'
 import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
-// TODO: why nned to invoke get
-import { get } from 'idb-keyval'
 import type { Document as TDocument } from '@langchain/core/documents'
 import { useI18n } from 'vue-i18n'
 import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
@@ -16,6 +14,7 @@ import FileModal from '~/components/FileModal.vue'
 import type { ChatModel } from 'openai/resources/index.mjs'
 import type { EmbeddingModel } from 'openai/src/resources/embeddings.js'
 import MessagesList from '~/components/MessagesList.vue'
+import { IDB_KEY } from '~/share'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -24,14 +23,14 @@ const storageOpenAIKey = useStorage('openai_key', '')
 let vectorStore: MemoryVectorStore
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
-const { data: fileDB } = useIDBKeyval('askpdf-file', '')
-const { data: documentDB } = useIDBKeyval<TDocument<Record<string, any>>[]>(
-  'askpdf-docs',
+const { data: fileDB } = useIDBKeyval(IDB_KEY.FILE, '')
+const { data: documentDB, isFinished: isDocumentFinished } = useIDBKeyval<TDocument<Record<string, any>>[]>(
+  IDB_KEY.DOCUMENTS,
   []
 )
-const { data: messagesDB } = useIDBKeyval<Message[]>('askpdf-msg', [])
+const { data: messagesDB, isFinished: isMessagesFinished } = useIDBKeyval<Message[]>(IDB_KEY.MESSAGES, [])
 const { data: relatedPagesSet } = useIDBKeyval<number[]>(
-  'askpdf-related-pages',
+  IDB_KEY.RELATED_PAGES,
   []
 )
 
@@ -63,11 +62,10 @@ async function uploadPdf(file: File) {
   try {
     const res = await upload(file)
     if (!res) return
-    const { documents, pdfSourceUrl, pdfToBase64File } = res
+    const { documents, pdfToBase64File } = res
     documentDB.value = documents
     vectorStore.addDocuments(documents)
     fileDB.value = pdfToBase64File
-    pdfSrc.value = pdfSourceUrl
   } catch (error) {
     toast.add({
       title: 'Error',
@@ -79,7 +77,6 @@ async function uploadPdf(file: File) {
 async function deletePdfData() {
   if (vectorStore && vectorStore.embeddings) await vectorStore.delete()
   fileDB.value = ''
-  pdfSrc.value = ''
   relatedPagesSet.value = []
   documentDB.value = []
   setMessages([])
@@ -89,7 +86,7 @@ const answerLoading = ref(false)
 const pageLinkElement = ref<HTMLElement>()
 const pageLinkElementIsVisible = ref(false)
 
-const { stop } = useIntersectionObserver(
+const { stop: stopIntersectionObserver } = useIntersectionObserver(
   pageLinkElement,
   ([{ isIntersecting }]) => {
     pageLinkElementIsVisible.value = isIntersecting
@@ -154,40 +151,33 @@ watch(useChatLoading, (v) => {
   }
 })
 
-const pdfSrc = ref('')
+const pdfSrc = computed(() => {
+  if (!fileDB.value) return ''
+  return URL.createObjectURL(base64ToPdf(fileDB.value))
+})
 
-async function refreshFromCache() {
-  const pdfFromStore = await get('askpdf-file')
-  if (pdfFromStore) {
-    const file = base64ToPdf(pdfFromStore)
-    pdfSrc.value = URL.createObjectURL(file)
-  }
-  const msgFromStore = await get('askpdf-msg')
-  if (msgFromStore) setMessages(msgFromStore)
-
-  const docsFromStore = await get('askpdf-docs')
-  if (docsFromStore && storageOpenAIKey.value) {
-    vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
-    vectorStore.addDocuments(docsFromStore)
-  }
-
-  const relatedPageNumFromStore = await get('askpdf-related-pages')
-  if (relatedPageNumFromStore.length > 0)
-    relatedPagesSet.value = relatedPageNumFromStore
-
-  scrollToBottom()
-
-}
+const setupScope = effectScope(true)
 onMounted(() => {
+  // TODO: no key condition
   if (storageOpenAIKey.value) {
     vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
   }
-  refreshFromCache()
+  setupScope.run(() => {
+    watchEffect(() => setMessages(messagesDB.value))
+    watchEffect(() => vectorStore && vectorStore.addDocuments(documentDB.value))
+  })
+})
+
+watch([isDocumentFinished, isMessagesFinished], ([a, b]) => {
+  if (a && b) {
+    setupScope.stop()
+    scrollToBottom()
+  }
 })
 
 onBeforeUnmount(() => {
   pdfSrc.value && URL.revokeObjectURL(pdfSrc.value)
-  stop()
+  stopIntersectionObserver()
 })
 
 const viewerRef = ref()
@@ -205,14 +195,23 @@ async function clearData() {
 const seletedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')
 const selectedChatModel = ref<ChatModel>('gpt-4o-mini')
 
-async function resetVectorStore() {
-  // TODO: Optimize vectorStore invoke
-  vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
-  if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
-  toast.add({
-    title: 'Success',
-    description: t('open-ai-key-success')
-  })
+const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async ({ apiKey, chatModel, embeddingModel }) => {
+  const isApiKeyChanged = apiKey !== storageOpenAIKey.value
+  const isEmbeddingModelChanged = embeddingModel !== seletedEmbeddingModel.value
+  storageOpenAIKey.value = apiKey
+  selectedChatModel.value = chatModel
+  seletedEmbeddingModel.value = embeddingModel
+
+  if (isApiKeyChanged || isEmbeddingModelChanged) {
+    vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
+    await vectorStore.addDocuments(documentDB.value)
+    if (isApiKeyChanged) {
+      toast.add({
+        title: 'Success',
+        description: t('open-ai-key-success')
+      })
+    }
+  }
 }
 </script>
 
@@ -261,6 +260,8 @@ async function resetVectorStore() {
       </div>
     </div>
     <FileModal v-model="isFileModalOpen" @on-upload="uploadPdf" />
-    <SettingsModal v-model:seleted-embedding-model="seletedEmbeddingModel" v-model:selected-chat-model="selectedChatModel" v-model="isSettingModalOpen" @clear-data="clearData" @on-close="resetVectorStore" />
+    <SettingsModal :api-key="storageOpenAIKey" :embedding-model="seletedEmbeddingModel"
+      :chat-model="selectedChatModel" v-model="isSettingModalOpen" @clear-data="clearData"
+      @close="onSettingModalClose" />
   </div>
 </template>

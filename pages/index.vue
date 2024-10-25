@@ -3,16 +3,17 @@ import { useStorage } from '@vueuse/core'
 import { useChat, type Message } from '@ai-sdk/vue'
 import type { NuxtError } from 'nuxt/app'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
-import { pdfToBase64 } from '~/utils/parser'
+// TODO: why nned to invoke get
 import { get } from 'idb-keyval'
-import { createDocuments } from '#imports'
 import type { Document as TDocument } from '@langchain/core/documents'
-import { usePDFLoader } from '~/utils/pdfloader'
 import { useI18n } from 'vue-i18n'
 import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
 import { usePdfUploader } from '~/composables/usePdfUploader'
 import AppHeader from '~/components/AppHeader.vue'
 import { useAppModal } from '~/composables/useAppModal'
+import SettingsModal from '~/components/SettingsModal.vue'
+import type { ChatModel } from 'openai/resources/index.mjs'
+import type { EmbeddingModel } from 'openai/src/resources/embeddings.js'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -47,7 +48,6 @@ const {
   api: '/api/chat',
   initialMessages: messagesDB.value,
   onError: (error) => {
-    console.log({error})
     toast.add({
       title: 'Error',
       description: error.message
@@ -79,7 +79,6 @@ async function uploadPdf() {
       title: 'Error',
       description: t('upload-file-error')
     })
-  } finally {
   }
 }
 
@@ -183,7 +182,7 @@ async function refreshFromCache() {
     relatedPagesSet.value = relatedPageNumFromStore
 
   scrollToBottom()
-  
+
 }
 onMounted(() => {
   if (storageOpenAIKey.value) {
@@ -209,15 +208,12 @@ async function clearData() {
   showClearDataConfirmModal.value = false
 }
 
-const seletedEmbeddingModel = ref<'text-embedding-3-small' | 'text-embedding-3-large' | 'text-embedding-ada-002'>('text-embedding-3-small')
-const selectedChatModel = ref<'gpt-4o' | 'gpt-4-turbo' | 'gpt-4' | 'gpt-3.5-turbo' | 'gpt-4o-mini'>('gpt-4o-mini')
+const seletedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')
+const selectedChatModel = ref<ChatModel>('gpt-4o-mini')
 
-watch(storageOpenAIKey, (newValue, oldValue) => {
-  if (newValue !== oldValue) refreshStore(newValue)
-})
-
-async function refreshStore(key: string) {
-  vectorStore = createMemoryVectorStore({ openAIApiKey: key, modelName: seletedEmbeddingModel.value })
+async function resetVectorStore() {
+  // TODO: Optimize vectorStore invoke
+  vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
   if (documentDB.value) await vectorStore.addDocuments(documentDB.value)
   toast.add({
     title: 'Success',
@@ -319,48 +315,6 @@ async function refreshStore(key: string) {
         </template>
       </UCard>
     </UModal>
-    <UModal v-model="isSettingModalOpen" prevent-close>
-      <UCard>
-        <template #header>
-          <h3>{{ t('settings') }}</h3>
-        </template>
-        <div class="mb-4">
-          <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">Embedding models</h5>
-          <USelect v-model="seletedEmbeddingModel"
-            :options="['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']" />
-
-        </div>
-        <div class="mb-4">
-          <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">Chat models</h5>
-          <USelect v-model="selectedChatModel" :options="['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo']" />
-
-        </div>
-        <div class="mb-4">
-          <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">OpenAI API Key
-
-          </h5>
-          <UInput placeholder="API Key" v-model="storageOpenAIKey" />
-          <div class="flex justify-end">
-            <a class="text-sm text-white text-opacity-50 mt-2 hover:underline text-right" target="_blank"
-              href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"> {{
-                t('open-ai-key-message') + '?' }}</a>
-          </div>
-        </div>
-        <UDivider class="my-4"></UDivider>
-        <UButton color="red" block @click="showClearDataConfirmModal = true">
-          {{ t('clear-data') }}
-        </UButton>
-        <template #footer>
-          <div class="flex justify-end">
-            <UButton @click="isSettingModalOpen = false">{{
-              t('close')
-              }}</UButton>
-          </div>
-        </template>
-      </UCard>
-    </UModal>
+    <SettingsModal v-model:seleted-embedding-model="seletedEmbeddingModel" v-model:selected-chat-model="selectedChatModel" v-model="isSettingModalOpen" @clear-data="clearData" @on-close="resetVectorStore" />
   </div>
-
-
-
 </template>

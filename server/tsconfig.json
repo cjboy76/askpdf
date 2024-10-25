@@ -1,6 +1,7 @@
 {
   "extends": "../.nuxt/tsconfig.server.json",
   "compilerOptions": {
-    "target": "ES2022"
+    "target": "ES2022",
+    "skipLibCheck": true
   }
 }

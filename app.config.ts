@@ -7,8 +7,9 @@ export default defineAppConfig({
     },
     notification: {
       default: {
-        timeout: 3000
+        timeout: 5000
       }
     }
-  },
+  }
 })
+

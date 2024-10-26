@@ -7,10 +7,7 @@ export default defineAppConfig({
     },
     notification: {
       default: {
-        timeout: 3000,
-        closeButton: {
-          padded: false
-        }
+        timeout: 3000
       }
     }
   },

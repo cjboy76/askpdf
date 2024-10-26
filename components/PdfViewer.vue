@@ -2,21 +2,24 @@
   <div class="h-full relative">
     <div class="h-[6%] flex justify-between items-center py-1 bg-zinc-300 dark:bg-zinc-800">
       <div class="flex justify-center items-center">
-        <UButton icon="i-heroicons-chevron-up" size="sm" color="primary" square variant="ghost"
-          class="mx-1" @click="setPageHandler(pageNum - 1)" :disabled="!props.pdfSrc" />
+        <UButton
+icon="i-heroicons-chevron-up" size="sm" color="primary" square variant="ghost"
+          class="mx-1" :disabled="!props.pdfSrc" @click="setPageHandler(pageNum - 1)" />
         <div class="flex mx-1">
-          <UInput class="w-20" type="number" v-model="pageNum" :useGrouping="false" :min="1" :max="pages"
+          <UInput
+v-model="pageNum" class="w-20" type="number" :use-grouping="false" :min="1" :max="pages"
             :disabled="!props.pdfSrc" @keyup.enter="setPageHandler(pageNum)" />
         </div>
         <div class="grid place-items-center mx-1">
           <span> / {{ pages }}</span>
         </div>
-        <UButton icon="i-heroicons-chevron-down" size="sm" color="primary" square variant="ghost"
-          class="mx-1" @click="setPageHandler(pageNum + 1)" :disabled="!props.pdfSrc" />
+        <UButton
+icon="i-heroicons-chevron-down" size="sm" color="primary" square variant="ghost"
+          class="mx-1" :disabled="!props.pdfSrc" @click="setPageHandler(pageNum + 1)" />
       </div>
     </div>
     <div id="main-container" class="absolute left-0 bottom-0 w-full h-[94%] grid place-items-center bg-zinc-200 dark:bg-zinc-700">
-      <div id="viewer-container" class="grid place-items-center"></div>
+      <div id="viewer-container" class="grid place-items-center"/>
     </div>
   </div>
 </template>
@@ -26,7 +29,10 @@ import { ref } from 'vue'
 import { CustomPDFViewer } from '#imports'
 
 const props = defineProps({
-  pdfSrc: String
+  pdfSrc: {
+    type: String,
+    default: ''
+  }
 })
 const pageNum = ref(1)
 const pages = ref(0)

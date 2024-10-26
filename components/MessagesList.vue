@@ -6,7 +6,7 @@ const props = defineProps<{ messages: Message[] }>()
 </script>
 
 <template>
-    <div v-for="{ content, role, id } of props.messages" :key="id" v-show="role !== 'system'">
+    <div v-for="{ content, role, id } of props.messages" v-show="role !== 'system'" :key="id">
         <div class="w-4/5 mx-auto grid grid-cols-8 gap-2 py-6">
             <div class="col-span-1 flex justify-end">
                 <UIcon v-if="role === 'assistant'" class="w-8 h-8" name="i-heroicons-face-smile-16-solid" />

@@ -1,10 +1,3 @@
-<template>
-  <NuxtLayout>
-    <NuxtPage class="max-h-screen" />
-  </NuxtLayout>
-  <UNotifications />
-</template>
-
 <script setup>
 useHead({
   title: 'AskPDF',
@@ -12,9 +5,9 @@ useHead({
     {
       name: 'description',
       content:
-        'A AI PDF Reader App with integrated chat, read and discuss in real time.'
+        'A AI PDF Reader App with integrated chat, read and discuss in real time.',
     },
-  ]
+  ],
 })
 useSeoMeta({
   title: 'AskPDF',
@@ -25,3 +18,10 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
 })
 </script>
+
+<template>
+  <NuxtLayout>
+    <NuxtPage class="max-h-screen" />
+  </NuxtLayout>
+  <UNotifications />
+</template>

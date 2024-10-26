@@ -24,9 +24,9 @@ function uploadHandler() {
             <template #header>
                 <div>{{ t('upload-file') }}</div>
             </template>
-            <UInput type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf"
-                @change="onFileSelect">
-            </UInput>
+            <UInput
+type="file" icon="i-heroicons-folder" class="flex justify-center" accept=".pdf"
+                @change="onFileSelect"/>
             <template #footer>
                 <div class="flex justify-end">
                     <UButton text class="mr-4" @click="model = false">{{ t('cancel') }}</UButton>

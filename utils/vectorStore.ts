@@ -1,4 +1,4 @@
-import { Document } from '@langchain/core/documents'
+import type { Document } from '@langchain/core/documents'
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
@@ -26,10 +26,12 @@ const splitter = new RecursiveCharacterTextSplitter({
 
 export async function createDocuments(data: PageContent[]) {
   const docPromise = data.map((d) => {
-    return new Promise<Document<Record<string, any>>[]>(async (resolve) => {
-      const fragments = await splitter.createDocuments([d.textContent])
-      fragments.forEach((f) => {
-        f.metadata.page = d.page
+    return new Promise<Document<Record<string, string>>[]>((resolve) => {
+      const fragments = splitter.createDocuments([d.textContent]).then(fragments => {
+        fragments.forEach((f) => {
+          f.metadata.page = d.page
+        })
+        return fragments
       })
       resolve(fragments)
     })

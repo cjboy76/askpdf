@@ -12,7 +12,7 @@ export const usePdfUploader = () => {
       return {
         documents, pdfToBase64File
       }
-    } catch (error) {
+    } catch {
       return null
     } finally {
       isPending.value = false

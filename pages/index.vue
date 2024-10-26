@@ -24,7 +24,7 @@ let vectorStore: MemoryVectorStore
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
 const { data: fileDB } = useIDBKeyval(IDB_KEY.FILE, '')
-const { data: documentDB, isFinished: isDocumentFinished } = useIDBKeyval<TDocument<Record<string, any>>[]>(
+const { data: documentDB, isFinished: isDocumentFinished } = useIDBKeyval<TDocument<Record<string, string>>[]>(
   IDB_KEY.DOCUMENTS,
   []
 )
@@ -66,7 +66,7 @@ async function uploadPdf(file: File) {
     documentDB.value = documents
     vectorStore.addDocuments(documents)
     fileDB.value = pdfToBase64File
-  } catch (error) {
+  } catch {
     toast.add({
       title: 'Error',
       description: t('upload-file-error')
@@ -176,7 +176,7 @@ watch([isDocumentFinished, isMessagesFinished], ([a, b]) => {
 })
 
 onBeforeUnmount(() => {
-  pdfSrc.value && URL.revokeObjectURL(pdfSrc.value)
+  if (pdfSrc.value) URL.revokeObjectURL(pdfSrc.value)
   stopIntersectionObserver()
 })
 
@@ -221,7 +221,7 @@ const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async
     <div class="grid grid-cols-6 gap-2 pb-2 px-2">
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
         <client-only fallback-tag="span" fallback="">
-          <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdfSrc="pdfSrc" />
+          <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdf-src="pdfSrc" />
           <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <div class="font-bold text-center mb-4 opacity-50">
               {{ t('greeting') }}
@@ -235,8 +235,9 @@ const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
         <div class="overflow-y-auto flex flex-col flex-grow">
           <MessagesList :messages="messages" />
-          <div ref="pageLinkElement" v-show="!answerLoading && messages.length" class="w-3/5 mx-auto pb-10">
-            <span v-for="(page, index) of relatedPagesSet" :key="index"
+          <div v-show="!answerLoading && messages.length" ref="pageLinkElement" class="w-3/5 mx-auto pb-10">
+            <span
+v-for="(page, index) of relatedPagesSet" :key="index"
               class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
               @click="viewerRef.setViewerPage(page)">
               #{{ page }}</span>
@@ -244,24 +245,24 @@ const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async
         </div>
         <div class="h-12 pt-2 relative">
           <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
-            <UInput class="flex-grow" v-model="input" :placeholder="t('input-placeholder')"
-              :disabled="answerLoading || isFileUploading">
-            </UInput>
+            <UInput
+v-model="input" class="flex-grow" :placeholder="t('input-placeholder')"
+              :disabled="answerLoading || isFileUploading" />
             <UButton :loading="answerLoading" class="ml-2" :disabled="isFileUploading" type="submit">
               Enter
             </UButton>
           </form>
-          <UButton v-show="!pageLinkElementIsVisible && messages.length" circle
-            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" @click="scrollToBottom"
-            icon="i-heroicons-chevron-down">
-          </UButton>
+          <UButton
+v-show="!pageLinkElementIsVisible && messages.length" circle
+            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" icon="i-heroicons-chevron-down"
+            @click="scrollToBottom" />
         </div>
         <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
       </div>
     </div>
     <FileModal v-model="isFileModalOpen" @on-upload="uploadPdf" />
-    <SettingsModal :api-key="storageOpenAIKey" :embedding-model="seletedEmbeddingModel"
-      :chat-model="selectedChatModel" v-model="isSettingModalOpen" @clear-data="clearData"
-      @close="onSettingModalClose" />
+    <SettingsModal
+v-model="isSettingModalOpen" :api-key="storageOpenAIKey" :embedding-model="seletedEmbeddingModel"
+      :chat-model="selectedChatModel" @clear-data="clearData" @close="onSettingModalClose" />
   </div>
 </template>

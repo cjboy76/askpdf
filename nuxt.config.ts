@@ -9,35 +9,36 @@ export default defineNuxtConfig({
       title: 'AskPDF',
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.png' }],
       htmlAttrs: {
-        lang: 'en'
-      }
-    }
+        lang: 'en',
+      },
+    },
   },
   nitro: {
     esbuild: {
       options: {
-        target: 'esnext'
-      }
-    }
+        target: 'esnext',
+      },
+    },
   },
   modules: [
     '@vueuse/nuxt',
     'nuxt-auth-utils',
     '@nuxt/ui',
-    '@nuxtjs/i18n'
+    '@nuxtjs/i18n',
+    '@nuxt/eslint',
   ],
   vite: {
     plugins: [topLevelAwait()],
     define: {
       __INTLIFY_JIT_COMPILATION__: true,
-      __INTLIFY_DROP_MESSAGE_COMPILER__: true
-    }
+      __INTLIFY_DROP_MESSAGE_COMPILER__: true,
+    },
   },
   build: {
-    transpile: ['nuxt']
+    transpile: ['nuxt'],
   },
   i18n: {
     locales: ['en-US', 'zh'],
-    vueI18n: './i18n.config.ts' // if you are using custom path, default
+    vueI18n: './i18n.config.ts', // if you are using custom path, default
   },
 })

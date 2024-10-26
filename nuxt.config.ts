@@ -22,7 +22,6 @@ export default defineNuxtConfig({
   },
   modules: [
     '@vueuse/nuxt',
-    'nuxt-auth-utils',
     '@nuxt/ui',
     '@nuxtjs/i18n',
     '@nuxt/eslint',

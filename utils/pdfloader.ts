@@ -22,6 +22,7 @@ export async function usePDFLoader(file: File) {
 }
 
 async function loadPdf(url: string | ArrayBuffer) {
+  // NOTE: https://github.com/dictadata/pdf-data-parser/issues/1#issuecomment-2065503342
   const loadingTask = getDocument(url)
   return loadingTask.promise.then((pdfDocument) => pdfDocument)
 }

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ChatModel, EmbeddingModel } from 'openai/resources/index.mjs';
-import { STATE_KEY } from '~/share';
 
 type State = {
     embeddingModel: EmbeddingModel,
@@ -11,17 +10,12 @@ type State = {
 const { t } = useI18n()
 const props = defineProps<State>()
 const emit = defineEmits<{
-    clearData: []
+    clearData: [],
+    deleteConversation: []
     close: [value: State]
 }>()
 const model = defineModel<boolean>({ default: false })
 const state = reactive({ ...structuredClone(toRaw(props)) })
-
-const isClearDataConfirmModalOpen = useState(STATE_KEY.TOGGLE_CLEAR_DATA_MODAL, () => false)
-
-function onClearData() {
-    emit('clearData')
-}
 
 function onClose() {
     model.value = false
@@ -61,9 +55,24 @@ class="text-sm text-white text-opacity-50 mt-2 hover:underline text-right" targe
                 </div>
             </div>
             <UDivider class="my-4"/>
-            <UButton color="red" block @click="isClearDataConfirmModalOpen = true">
-                {{ t('clear-data') }}
-            </UButton>
+            <div class="flex justify-between items-center">
+                <div><h5><strong>{{t('delete-conversation')}}</strong></h5>
+                </div>
+                <UButton color="red" @click="emit('deleteConversation')">
+                    {{ t('delete') }}
+                </UButton>
+            </div>
+            <UDivider class="my-4"/>
+            <div class="flex justify-between items-center">
+                <div><h5><strong>{{t('clear-data')}}</strong></h5>
+                <p class="text-xs">
+                    {{ t('clear-data-message') }}
+                </p>
+                </div>
+                <UButton color="red" @click="emit('clearData')">
+                    {{ t('clear-data') }}
+                </UButton>
+            </div>
             <template #footer>
                 <div class="flex justify-end">
                     <UButton @click="onClose">
@@ -74,5 +83,4 @@ class="text-sm text-white text-opacity-50 mt-2 hover:underline text-right" targe
             </template>
         </UCard>
     </UModal>
-    <ClearDataConfirmModal v-model="isClearDataConfirmModalOpen" @clear-data="onClearData" />
 </template>

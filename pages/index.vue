@@ -213,6 +213,11 @@ const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async
     }
   }
 }
+
+const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversation'] = () => {
+  setMessages([])
+  messagesDB.value = []
+}
 </script>
 
 <template>
@@ -263,6 +268,7 @@ v-show="!pageLinkElementIsVisible && messages.length" circle
     <FileModal v-model="isFileModalOpen" @on-upload="uploadPdf" />
     <SettingsModal
 v-model="isSettingModalOpen" :api-key="storageOpenAIKey" :embedding-model="seletedEmbeddingModel"
-      :chat-model="selectedChatModel" @clear-data="clearData" @close="onSettingModalClose" />
+      :chat-model="selectedChatModel" @clear-data="clearData" @close="onSettingModalClose"
+      @delete-conversation="onDeleteConversation" />
   </div>
 </template>

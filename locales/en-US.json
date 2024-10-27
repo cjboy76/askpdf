@@ -1,6 +1,8 @@
 {
   "lang": "Languages",
   "greeting": "Upload files and get started",
+  "delete-conversation": "Delete conversation",
+  "delete": "Delete",
   "clear-data": "Clear data",
   "clear-data-message": "All data including PDF files, chat history, etc. will be deleted. Are you sure you want to clear?",
   "open-ai-key": "Open AI Key",

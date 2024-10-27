@@ -1,6 +1,8 @@
 {
   "lang": "語言",
   "greeting": "上傳文件，開始體驗",
+  "delete-conversation": "刪除交談內容",
+  "delete": "刪除",
   "clear-data": "清除資料",
   "clear-data-message": "即將刪除 PDF 文件、對話紀錄等所有資料，確定要清除嗎?",
   "open-ai-key": "Open AI Key",

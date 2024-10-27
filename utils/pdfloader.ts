@@ -1,6 +1,6 @@
-import * as pdfjsLib from 'pdfjs-dist'
+import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString()
+GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString()
 
 export async function usePDFLoader(file: File) {
   if (!file || !file.type || !file.size) {
@@ -22,12 +22,12 @@ export async function usePDFLoader(file: File) {
 }
 
 async function loadPdf(url: string | ArrayBuffer) {
-  const loadingTask = pdfjsLib.getDocument(url)
+  const loadingTask = getDocument(url)
   return loadingTask.promise.then((pdfDocument) => pdfDocument)
 }
 
 function getPageContent(
-    pdfDocument: pdfjsLib.PDFDocumentProxy,
+    pdfDocument: PDFDocumentProxy,
     page: number
   ): Promise<PageContent> {
     return new Promise((resolve) => {
@@ -45,7 +45,7 @@ function getPageContent(
     })
   }
   
-  function extractPdfContent(pdfDocument: pdfjsLib.PDFDocumentProxy) {
+  function extractPdfContent(pdfDocument: PDFDocumentProxy) {
     const pool = Array.from({ length: pdfDocument.numPages }, (_, index) => {
       return getPageContent(pdfDocument, index + 1)
     })

@@ -20,6 +20,7 @@ const { t } = useI18n()
 const toast = useToast()
 const storageOpenAIKey = useStorage('openai_key', '')
 
+// NOTE: MemoryVectorStore https://github.com/langchain-ai/langchainjs/blob/f75e99bee43c03996425ee1a72fde2472e1c2020/langchain/src/vectorstores/memory.ts#L142
 let vectorStore: MemoryVectorStore
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
@@ -75,7 +76,7 @@ async function uploadPdf(file: File) {
 }
 
 async function deletePdfData() {
-  if (vectorStore && vectorStore.embeddings) await vectorStore.delete()
+  if (vectorStore && vectorStore.embeddings) vectorStore.memoryVectors = []
   fileDB.value = ''
   relatedPagesSet.value = []
   documentDB.value = []
@@ -181,7 +182,6 @@ onBeforeUnmount(() => {
 })
 
 const viewerRef = ref()
-const showClearDataConfirmModal = ref(false)
 
 async function clearData() {
   await deletePdfData()
@@ -189,7 +189,6 @@ async function clearData() {
     title: 'Success',
     description: t('clear-data-success')
   })
-  showClearDataConfirmModal.value = false
 }
 
 const seletedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')

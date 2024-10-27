@@ -7,5 +7,5 @@
 ### Development Setup
 
 1. Clone the repo
-2. Run `yarn install` and `yarn dev`
+2. Run `pnpm install` and `pnpm dev`
 3. Open http://localhost:3000

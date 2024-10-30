@@ -61,6 +61,7 @@ async function uploadPdf(file: File) {
     return
   }
   try {
+    await deletePdfData()
     const res = await upload(file)
     if (!res) return
     const { documents, pdfToBase64File } = res
@@ -80,6 +81,7 @@ async function uploadPdf(file: File) {
 async function identifyDocumentThemes() {
   const result = await vectorStore.similaritySearch('Main topic of this book')
   const docs = result.map(s => s.pageContent).join('')
+  if (!docs) return
   documentTitle.value = await $fetch('/api/document/theme', {
     method: 'POST',
     body: { docs, model: selectedChatModel.value },
@@ -273,7 +275,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
             <span
               v-for="(page, index) of relatedPagesSet"
               :key="index"
-              class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
+              class="font-bold p-1 rounded cursor-pointer hover:bg-primary hover:underline"
               @click="viewerRef.setViewerPage(page)"
             >
               #{{ page }}</span>

@@ -1,7 +1,7 @@
+import { CharacterTextSplitter } from 'langchain/text_splitter'
 import type { Document } from '@langchain/core/documents'
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from '@langchain/openai'
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 
 type OpenAIEmbeddingsConfig = {
   openAIApiKey: string,
@@ -19,8 +19,8 @@ export function createMemoryVectorStore(config: OpenAIEmbeddingsConfig) {
   )
 }
 
-const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 300,
+const splitter = new CharacterTextSplitter({
+  chunkSize: 600,
   chunkOverlap: 15
 })
 

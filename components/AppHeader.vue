@@ -23,12 +23,12 @@ const { isPending: isFileUploading } = usePdfUploader()
 <template>
   <header class="py-2 px-4 z-10 flex justify-between">
     <div class="flex items-center">
-      <div class="grid place-items-center font-bold">
+      <div class="grid place-items-center font-bold text-primary">
         AskPDF
       </div>
-      <p v-if="title" class="mx-1 text-stone-600">/</p>
+      <p v-if="title" class="mx-1 text-stone-600 dark:text-stone-300">/</p>
       <Transition name="pop-up">
-        <p v-if="title" class="text-stone-600">{{ title }}</p>
+        <p v-if="title" class="text-stone-600 dark:text-stone-300">{{ title }}</p>
       </Transition>
     </div>
     <div class="flex justify-end items-center">

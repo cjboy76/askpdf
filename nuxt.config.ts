@@ -25,6 +25,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxtjs/i18n',
     '@nuxt/eslint',
+    '@nuxtjs/color-mode',
   ],
   eslint: {
     config: {

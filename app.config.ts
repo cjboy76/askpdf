@@ -1,6 +1,6 @@
 export default defineAppConfig({
   ui: {
-    primary: 'teal',
+    primary: 'yellow',
     gray: 'cool',
     notifications: {
       position: 'right-0 bottom-0',

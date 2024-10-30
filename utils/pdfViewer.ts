@@ -1,4 +1,4 @@
-import { EventBus, PDFSinglePageViewer } from 'pdfjs-dist/legacy/web/pdf_viewer.mjs'
+// import { EventBus, PDFSinglePageViewer } from 'pdfjs-dist/legacy/web/pdf_viewer.mjs'
 import { GlobalWorkerOptions, type PDFDocumentProxy, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer';
 
@@ -36,6 +36,8 @@ export class CustomPDFViewer {
   }
 
   async setupinstance() {
+    // NOTE: https://github.com/mozilla/pdf.js/issues/17228#issuecomment-1804825465
+    const { EventBus, PDFSinglePageViewer } = await import('pdfjs-dist/legacy/web/pdf_viewer.mjs')
     const eventBus = new EventBus()
     this.PDFViewer = new PDFSinglePageViewer({
       container: document.querySelector<HTMLDivElement>('#viewer-container')!,

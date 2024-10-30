@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { type Message, useChat } from '@ai-sdk/vue'
-import AppHeader from '~/components/AppHeader.vue'
 import type { ChatModel } from 'openai/resources/index.mjs'
 import type { EmbeddingModel } from 'openai/src/resources/embeddings.js'
-import FileModal from '~/components/FileModal.vue'
-import { IDB_KEY } from '~/share'
 import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
-import MessagesList from '~/components/MessagesList.vue'
 import type { NuxtError } from 'nuxt/app'
-import SettingsModal from '~/components/SettingsModal.vue'
 import type { Document as TDocument } from '@langchain/core/documents'
-import { useAppModal } from '~/composables/useAppModal'
 import { useI18n } from 'vue-i18n'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
-import { usePdfUploader } from '~/composables/usePdfUploader'
 import { useStorage } from '@vueuse/core'
+import FileModal from '~/components/FileModal.vue'
+import { IDB_KEY } from '~/share'
+import MessagesList from '~/components/MessagesList.vue'
+import SettingsModal from '~/components/SettingsModal.vue'
+import { useAppModal } from '~/composables/useAppModal'
+import { usePdfUploader } from '~/composables/usePdfUploader'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -27,27 +26,28 @@ const { isPending: isFileUploading, upload } = usePdfUploader()
 const { data: fileDB } = useIDBKeyval(IDB_KEY.FILE, '')
 const { data: documentDB, isFinished: isDocumentFinished } = useIDBKeyval<TDocument<Record<string, string>>[]>(
   IDB_KEY.DOCUMENTS,
-  []
+  [],
 )
 const { data: messagesDB, isFinished: isMessagesFinished } = useIDBKeyval<Message[]>(IDB_KEY.MESSAGES, [])
 const { data: relatedPagesSet } = useIDBKeyval<number[]>(
   IDB_KEY.RELATED_PAGES,
-  []
+  [],
 )
+const { data: documentTitle } = useIDBKeyval(IDB_KEY.DOC_TITLE, '')
 
 const {
   messages,
   setMessages,
   handleSubmit,
   input,
-  isLoading: useChatLoading
+  isLoading: useChatLoading,
 } = useChat({
   api: '/api/chat',
   initialMessages: messagesDB.value,
   onError: (error) => {
     toast.add({
       title: 'Error',
-      description: error.message
+      description: error.message,
     })
   },
 })
@@ -56,7 +56,7 @@ async function uploadPdf(file: File) {
   if (!storageOpenAIKey.value) {
     toast.add({
       title: 'Info',
-      description: t('open-ai-key-required')
+      description: t('open-ai-key-required'),
     })
     return
   }
@@ -65,14 +65,28 @@ async function uploadPdf(file: File) {
     if (!res) return
     const { documents, pdfToBase64File } = res
     documentDB.value = documents
-    vectorStore.addDocuments(documents)
+    await vectorStore.addDocuments(documents)
     fileDB.value = pdfToBase64File
-  } catch {
+    identifyDocumentThemes()
+  }
+  catch {
     toast.add({
       title: 'Error',
-      description: t('upload-file-error')
+      description: t('upload-file-error'),
     })
   }
+}
+
+async function identifyDocumentThemes() {
+  const result = await vectorStore.similaritySearch('Main topic of this book')
+  const docs = result.map(s => s.pageContent).join('')
+  documentTitle.value = await $fetch('/api/document/theme', {
+    method: 'POST',
+    body: { docs, model: selectedChatModel.value },
+    headers: {
+      'x-openai-key': storageOpenAIKey.value,
+    },
+  })
 }
 
 async function deletePdfData() {
@@ -82,6 +96,7 @@ async function deletePdfData() {
   documentDB.value = []
   setMessages([])
   messagesDB.value = []
+  documentTitle.value = ''
 }
 const answerLoading = ref(false)
 const pageLinkElement = ref<HTMLElement>()
@@ -91,14 +106,14 @@ const { stop: stopIntersectionObserver } = useIntersectionObserver(
   pageLinkElement,
   ([{ isIntersecting }]) => {
     pageLinkElementIsVisible.value = isIntersecting
-  }
+  },
 )
 
 function scrollToBottom() {
   pageLinkElement.value?.scrollIntoView({
     block: 'end',
     inline: 'nearest',
-    behavior: 'smooth'
+    behavior: 'smooth',
   })
 }
 
@@ -109,34 +124,35 @@ async function submitHandler(e: Event) {
     const similarityDocs = await vectorStore.similaritySearch(input.value, 5)
     const relatedPageNum = similarityDocs
       .sort((a, b) => a.metadata.page - b.metadata.page)
-      .map((p) => p.metadata.page)
+      .map(p => p.metadata.page)
     relatedPagesSet.value = [...new Set(relatedPageNum)]
 
-    const systemPrompt = similarityDocs.map((s) => s.pageContent).join('')
+    const systemPrompt = similarityDocs.map(s => s.pageContent).join('')
     setMessages([
       ...messages.value,
       {
         id: `${new Date().toISOString()}`,
         role: 'system',
-        content: systemPrompt
-      }
+        content: systemPrompt,
+      },
     ])
     handleSubmit(e, {
       allowEmptySubmit: true,
       headers: {
-        'x-openai-key': storageOpenAIKey.value
+        'x-openai-key': storageOpenAIKey.value,
       },
       body: {
         data: {
           model: selectedChatModel.value,
-        }
-      }
+        },
+      },
     })
-  } catch (error: unknown) {
+  }
+  catch (error: unknown) {
     const { message: errorMessage } = error as NuxtError
     toast.add({
       title: 'Error',
-      description: errorMessage
+      description: errorMessage,
     })
     answerLoading.value = false
   }
@@ -187,7 +203,7 @@ async function clearData() {
   await deletePdfData()
   toast.add({
     title: 'Success',
-    description: t('clear-data-success')
+    description: t('clear-data-success'),
   })
 }
 
@@ -207,7 +223,7 @@ const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async
     if (isApiKeyChanged) {
       toast.add({
         title: 'Success',
-        description: t('open-ai-key-success')
+        description: t('open-ai-key-success'),
       })
     }
   }
@@ -221,12 +237,22 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
 
 <template>
   <div class="flex flex-col">
-    <AppHeader />
+    <AppHeader :title="documentTitle" />
     <div class="grid grid-cols-6 gap-2 pb-2 px-2">
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
-        <client-only fallback-tag="span" fallback="">
-          <PdfViewer v-if="pdfSrc" ref="viewerRef" :pdf-src="pdfSrc" />
-          <div v-else class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <client-only
+          fallback-tag="span"
+          fallback=""
+        >
+          <PdfViewer
+            v-if="pdfSrc"
+            ref="viewerRef"
+            :pdf-src="pdfSrc"
+          />
+          <div
+            v-else
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          >
             <div class="font-bold text-center mb-4 opacity-50">
               {{ t('greeting') }}
             </div>
@@ -239,35 +265,76 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
         <div class="overflow-y-auto flex flex-col flex-grow">
           <MessagesList :messages="messages" />
-          <div v-show="!answerLoading && messages.length" ref="pageLinkElement" class="w-3/5 mx-auto pb-10">
+          <div
+            v-show="!answerLoading && messages.length"
+            ref="pageLinkElement"
+            class="w-3/5 mx-auto pb-10"
+          >
             <span
-v-for="(page, index) of relatedPagesSet" :key="index"
+              v-for="(page, index) of relatedPagesSet"
+              :key="index"
               class="font-bold p-1 rounded cursor-pointer hover:bg-yellow-200 hover:underline"
-              @click="viewerRef.setViewerPage(page)">
+              @click="viewerRef.setViewerPage(page)"
+            >
               #{{ page }}</span>
           </div>
         </div>
         <div class="h-12 pt-2 relative">
-          <form class="w-5/6 max-w-2xl mx-auto flex" @submit.prevent="submitHandler">
+          <form
+            class="w-5/6 max-w-2xl mx-auto flex"
+            @submit.prevent="submitHandler"
+          >
             <UInput
-v-model="input" class="flex-grow" :placeholder="t('input-placeholder')"
-              :disabled="answerLoading || isFileUploading" />
-            <UButton :loading="answerLoading" class="ml-2" :disabled="isFileUploading" type="submit">
+              v-model="input"
+              class="flex-grow"
+              :placeholder="t('input-placeholder')"
+              :disabled="answerLoading || isFileUploading"
+            />
+            <UButton
+              :loading="answerLoading"
+              class="ml-2"
+              :disabled="isFileUploading"
+              type="submit"
+            >
               Enter
             </UButton>
           </form>
           <UButton
-v-show="!pageLinkElementIsVisible && messages.length" circle
-            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100" icon="i-heroicons-chevron-down"
-            @click="scrollToBottom" />
+            v-show="!pageLinkElementIsVisible && messages.length"
+            circle
+            class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100"
+            icon="i-heroicons-chevron-down"
+            @click="scrollToBottom"
+          />
         </div>
-        <div class="text-center text-zinc-400 py-1">cjboy76 © 2024</div>
+        <div class="text-center text-zinc-400 py-1">
+          cjboy76 © 2024
+        </div>
       </div>
     </div>
-    <FileModal v-model="isFileModalOpen" @on-upload="uploadPdf" />
+    <FileModal
+      v-model="isFileModalOpen"
+      @on-upload="uploadPdf"
+    />
     <SettingsModal
-v-model="isSettingModalOpen" :api-key="storageOpenAIKey" :embedding-model="seletedEmbeddingModel"
-      :chat-model="selectedChatModel" @clear-data="clearData" @close="onSettingModalClose"
-      @delete-conversation="onDeleteConversation" />
+      v-model="isSettingModalOpen"
+      :api-key="storageOpenAIKey"
+      :embedding-model="seletedEmbeddingModel"
+      :chat-model="selectedChatModel"
+      @clear-data="clearData"
+      @close="onSettingModalClose"
+      @delete-conversation="onDeleteConversation"
+    />
   </div>
 </template>
+
+<style>
+body {
+  background-color: #fff;
+  color: #454545;
+}
+.dark body {
+  background-color: #15202b;
+  color: #ebf4f1;
+}
+</style>

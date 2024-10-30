@@ -1,4 +1,4 @@
 export type PageContent = {
-    textContent: string
-    page: number
+  textContent: string
+  page: number
 }

@@ -1,5 +1,5 @@
-import { GlobalWorkerOptions, type PDFDocumentProxy, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer';
+import { GlobalWorkerOptions, type PDFDocumentProxy, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
+import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer'
 
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString()
 
@@ -45,9 +45,9 @@ export class CustomPDFViewer {
       textLayerMode: 0,
       annotationMode: 0,
     })
-    eventBus.on("pagesinit",  () =>  {
-      console.log("pagesinit")
-      this.PDFViewer.currentScaleValue = "page-fit";
-    });
+    eventBus.on('pagesinit', () => {
+      console.log('pagesinit')
+      this.PDFViewer.currentScaleValue = 'page-fit'
+    })
   }
 }

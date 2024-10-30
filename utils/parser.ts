@@ -15,7 +15,8 @@ export async function pdfToBase64(file: File) {
       if (event.target && typeof event.target.result === 'string') {
         const base64String = event.target.result.split('base64,')[1]
         resolve(base64String)
-      } else {
+      }
+      else {
         reject(new Error('Failed to read PDF file'))
       }
     }

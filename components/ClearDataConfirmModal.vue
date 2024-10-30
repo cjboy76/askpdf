@@ -21,7 +21,10 @@ function onClearDataClick() {
 
       <template #footer>
         <div class="flex justify-end">
-          <UButton class="mr-4" @click="model = false">
+          <UButton
+            class="mr-4"
+            @click="model = false"
+          >
             {{ t('cancel') }}
           </UButton>
           <UButton @click="onClearDataClick">

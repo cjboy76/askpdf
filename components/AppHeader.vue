@@ -26,25 +26,49 @@ const { isPending: isFileUploading } = usePdfUploader()
       <div class="grid place-items-center font-bold text-primary">
         AskPDF
       </div>
-      <p v-if="title" class="mx-1 text-stone-600 dark:text-stone-300">/</p>
+      <p
+        v-if="title"
+        class="mx-1 text-stone-600 dark:text-stone-300"
+      >
+        /
+      </p>
       <Transition name="pop-up">
-        <p v-if="title" class="text-stone-600 dark:text-stone-300">{{ title }}</p>
+        <p
+          v-if="title"
+          class="text-stone-600 dark:text-stone-300"
+        >
+          {{ title }}
+        </p>
       </Transition>
     </div>
     <div class="flex justify-end items-center">
       <ClientOnly>
         <UButton
-          class="mx-1" :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
-          color="gray" variant="ghost" aria-label="Theme" @click="isDark = !isDark"
+          class="mx-1"
+          :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+          color="gray"
+          variant="ghost"
+          aria-label="Theme"
+          @click="isDark = !isDark"
         />
         <template #fallback>
           <div class="w-8 h-8" />
         </template>
       </ClientOnly>
-      <UButton text class="mx-1" :disabled="isFileUploading" @click="isFileModalOpen = true">
+      <UButton
+        text
+        class="mx-1"
+        :disabled="isFileUploading"
+        @click="isFileModalOpen = true"
+      >
         {{ t('upload-file') }}
       </UButton>
-      <UButton text class="mx-1" :disabled="isFileUploading" @click="isSettingModalOpen = true">
+      <UButton
+        text
+        class="mx-1"
+        :disabled="isFileUploading"
+        @click="isSettingModalOpen = true"
+      >
         {{ t('settings') }}
       </UButton>
       <LangSelector class="mx-1" />

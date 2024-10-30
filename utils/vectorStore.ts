@@ -1,33 +1,32 @@
 import { CharacterTextSplitter } from 'langchain/text_splitter'
 import type { Document } from '@langchain/core/documents'
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { MemoryVectorStore } from 'langchain/vectorstores/memory'
 import { OpenAIEmbeddings } from '@langchain/openai'
 
 type OpenAIEmbeddingsConfig = {
-  openAIApiKey: string,
+  openAIApiKey: string
   modelName: string
 }
-
 
 export function createMemoryVectorStore(config: OpenAIEmbeddingsConfig) {
   const { openAIApiKey = '', modelName = 'gpt-4o' } = config
   return new MemoryVectorStore(
     new OpenAIEmbeddings({
       openAIApiKey,
-      modelName
-    })
+      modelName,
+    }),
   )
 }
 
 const splitter = new CharacterTextSplitter({
   chunkSize: 600,
-  chunkOverlap: 15
+  chunkOverlap: 15,
 })
 
 export async function createDocuments(data: PageContent[]) {
   const docPromise = data.map((d) => {
     return new Promise<Document<Record<string, string>>[]>((resolve) => {
-      const fragments = splitter.createDocuments([d.textContent]).then(fragments => {
+      const fragments = splitter.createDocuments([d.textContent]).then((fragments) => {
         fragments.forEach((f) => {
           f.metadata.page = d.page
         })
@@ -41,7 +40,7 @@ export async function createDocuments(data: PageContent[]) {
     (prev, promiseDocument) => {
       return [...prev, ...promiseDocument]
     },
-    []
+    [],
   )
   return documents
 }

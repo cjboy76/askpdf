@@ -2,8 +2,15 @@
 import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
-  devtools: { enabled: process.env.NODE_ENV === 'development' },
+  modules: [
+    '@vueuse/nuxt',
+    '@nuxt/ui',
+    '@nuxtjs/i18n',
+    '@nuxt/eslint',
+    '@nuxtjs/color-mode',
+  ],
   ssr: true,
+  devtools: { enabled: process.env.NODE_ENV === 'development' },
   app: {
     head: {
       title: 'AskPDF',
@@ -13,24 +20,15 @@ export default defineNuxtConfig({
       },
     },
   },
+  build: {
+    transpile: ['nuxt'],
+  },
   nitro: {
     esbuild: {
       options: {
         target: 'esnext',
       },
     },
-  },
-  modules: [
-    '@vueuse/nuxt',
-    '@nuxt/ui',
-    '@nuxtjs/i18n',
-    '@nuxt/eslint',
-    '@nuxtjs/color-mode',
-  ],
-  eslint: {
-    config: {
-      stylistic: true
-    }
   },
   vite: {
     plugins: [topLevelAwait()],
@@ -39,8 +37,10 @@ export default defineNuxtConfig({
       __INTLIFY_DROP_MESSAGE_COMPILER__: true,
     },
   },
-  build: {
-    transpile: ['nuxt'],
+  eslint: {
+    config: {
+      stylistic: true,
+    },
   },
   i18n: {
     locales: ['en-US', 'zh'],

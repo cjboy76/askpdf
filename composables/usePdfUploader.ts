@@ -1,4 +1,4 @@
-import { STATE_KEY } from "~/share"
+import { STATE_KEY } from '~/share'
 
 export const usePdfUploader = () => {
   const isPending = useState(STATE_KEY.IS_FILE_UPLOADING, () => false)
@@ -10,16 +10,18 @@ export const usePdfUploader = () => {
       const documents = await createDocuments(pdfInfo.data)
       const pdfToBase64File = await pdfToBase64(file as File)
       return {
-        documents, pdfToBase64File
+        documents, pdfToBase64File,
       }
-    } catch {
+    }
+    catch {
       return null
-    } finally {
+    }
+    finally {
       isPending.value = false
     }
   }
 
   return {
-    isPending, upload
+    isPending, upload,
   }
 }

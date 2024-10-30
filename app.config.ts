@@ -3,11 +3,11 @@ export default defineAppConfig({
     primary: 'teal',
     gray: 'cool',
     notifications: {
-      position: 'top-0 bottom-auto',
+      position: 'right-0 bottom-0',
     },
     notification: {
       default: {
-        timeout: 3000
+        timeout: 1000
       }
     }
   }

@@ -1,4 +1,3 @@
-// import { EventBus, PDFSinglePageViewer } from 'pdfjs-dist/legacy/web/pdf_viewer.mjs'
 import { GlobalWorkerOptions, type PDFDocumentProxy, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFViewer } from 'pdfjs-dist/types/web/pdf_viewer';
 

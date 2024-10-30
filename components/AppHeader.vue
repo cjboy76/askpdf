@@ -2,6 +2,8 @@
 import { useAppModal } from '~/composables/useAppModal'
 import { usePdfUploader } from '~/composables/usePdfUploader'
 
+const { title } = defineProps<{ title: string }>()
+
 const { t } = useI18n()
 const colorMode = useColorMode()
 const isDark = computed({
@@ -20,8 +22,14 @@ const { isPending: isFileUploading } = usePdfUploader()
 
 <template>
   <header class="py-2 px-4 z-10 flex justify-between">
-    <div class="grid place-items-center font-bold">
-      AskPDF
+    <div class="flex items-center">
+      <div class="grid place-items-center font-bold">
+        AskPDF
+      </div>
+      <p v-if="title" class="mx-1 text-stone-600">/</p>
+      <Transition name="pop-up">
+        <p v-if="title" class="text-stone-600">{{ title }}</p>
+      </Transition>
     </div>
     <div class="flex justify-end items-center">
       <ClientOnly>
@@ -43,3 +51,19 @@ const { isPending: isFileUploading } = usePdfUploader()
     </div>
   </header>
 </template>
+
+<style scoped>
+.pop-up-enter-active {
+  transition: all 0.3s ease;
+}
+
+.pop-up-leave-active {
+  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
+}
+
+.pop-up-enter-from,
+.pop-up-leave-to {
+  transform: translateY(5px);
+  opacity: 0;
+}
+</style>

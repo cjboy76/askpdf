@@ -30,7 +30,7 @@ function onClose() {
   >
     <UCard>
       <template #header>
-        <h3>{{ t('settings') }}</h3>
+        <div class="font-bold text-lg">{{ t('settings') }}</div>
       </template>
       <div class="mb-4">
         <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">
@@ -60,7 +60,7 @@ function onClose() {
         />
         <div class="flex justify-end">
           <a
-            class="text-sm text-white text-opacity-50 mt-2 hover:underline text-right"
+            class="text-sm text-opacity-50 mt-2 hover:underline text-right"
             target="_blank"
             href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key"
           > {{
@@ -70,7 +70,7 @@ function onClose() {
       <UDivider class="my-4" />
       <div class="flex justify-between items-center">
         <div>
-          <h5><strong>{{ t('delete-conversation') }}</strong></h5>
+          <h5>{{ t('delete-conversation') }}</h5>
         </div>
         <UButton
           color="red"
@@ -82,7 +82,7 @@ function onClose() {
       <UDivider class="my-4" />
       <div class="flex justify-between items-center">
         <div>
-          <h5><strong>{{ t('clear-data') }}</strong></h5>
+          <h5>{{ t('clear-data') }}</h5>
           <p class="text-xs">
             {{ t('clear-data-message') }}
           </p>

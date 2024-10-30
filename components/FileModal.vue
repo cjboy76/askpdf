@@ -6,7 +6,7 @@ const emit = defineEmits<{
   onUpload: [value: File]
 }>()
 
-const uploadFile = ref<File>()
+const uploadFile = ref<File | null>()
 
 function onFileSelect(files: FileList) {
   if (files[0]) uploadFile.value = files[0]
@@ -14,7 +14,10 @@ function onFileSelect(files: FileList) {
 
 function uploadHandler() {
   model.value = false
-  emit('onUpload', toRaw(uploadFile.value!))
+  if (!uploadFile.value) return
+  const file = uploadFile.value
+  uploadFile.value = null
+  emit('onUpload', toRaw(file))
 }
 </script>
 
@@ -26,7 +29,7 @@ function uploadHandler() {
   >
     <UCard>
       <template #header>
-        <div>{{ t('upload-file') }}</div>
+        <div class="font-bold">{{ t('upload-file') }}</div>
       </template>
       <UInput
         type="file"

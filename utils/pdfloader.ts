@@ -1,4 +1,4 @@
-import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { GlobalWorkerOptions, type PDFDocumentProxy, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url).toString()
 

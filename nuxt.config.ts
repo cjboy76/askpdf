@@ -26,6 +26,11 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/eslint',
   ],
+  eslint: {
+    config: {
+      stylistic: true
+    }
+  },
   vite: {
     plugins: [topLevelAwait()],
     define: {

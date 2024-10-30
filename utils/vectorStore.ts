@@ -1,7 +1,7 @@
 import type { Document } from '@langchain/core/documents'
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
 
 type OpenAIEmbeddingsConfig = {
   openAIApiKey: string,

@@ -25,8 +25,8 @@ icon="i-heroicons-chevron-down" size="sm" color="primary" square variant="ghost"
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { CustomPDFViewer } from '#imports'
+import { ref } from 'vue'
 
 defineExpose({
   setViewerPage: (num: number) => {

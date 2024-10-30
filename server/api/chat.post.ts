@@ -1,5 +1,5 @@
+import { convertToCoreMessages, streamText } from 'ai';
 import type { Message } from 'ai';
-import { streamText, convertToCoreMessages } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 
 export default defineEventHandler(async (event) => {

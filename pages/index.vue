@@ -311,7 +311,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
           />
         </div>
         <div class="text-center text-zinc-400 py-1">
-          cjboy76 © 2024
+          cjboy76 © 2023-{{ new Date().getFullYear() }}
         </div>
       </div>
     </div>

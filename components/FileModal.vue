@@ -29,7 +29,9 @@ function uploadHandler() {
   >
     <UCard>
       <template #header>
-        <div class="font-bold">{{ t('upload-file') }}</div>
+        <div class="font-bold">
+          {{ t('upload-file') }}
+        </div>
       </template>
       <UInput
         type="file"

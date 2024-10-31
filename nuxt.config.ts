@@ -37,11 +37,6 @@ export default defineNuxtConfig({
       __INTLIFY_DROP_MESSAGE_COMPILER__: true,
     },
   },
-  eslint: {
-    config: {
-      stylistic: true,
-    },
-  },
   i18n: {
     locales: ['en-US', 'zh'],
     vueI18n: './i18n.config.ts', // if you are using custom path, default

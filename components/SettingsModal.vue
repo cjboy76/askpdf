@@ -30,7 +30,9 @@ function onClose() {
   >
     <UCard>
       <template #header>
-        <div class="font-bold text-lg">{{ t('settings') }}</div>
+        <div class="font-bold text-lg">
+          {{ t('settings') }}
+        </div>
       </template>
       <div class="mb-4">
         <h5 class="text-black text-opacity-50 mb-1 dark:text-white dark:text-opacity-50">

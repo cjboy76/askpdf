@@ -20,7 +20,16 @@ const toast = useToast()
 const storageOpenAIKey = useStorage('openai_key', '')
 
 // NOTE: MemoryVectorStore https://github.com/langchain-ai/langchainjs/blob/f75e99bee43c03996425ee1a72fde2472e1c2020/langchain/src/vectorstores/memory.ts#L142
+const selectedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')
+const selectedChatModel = ref<ChatModel>('gpt-4o-mini')
 let vectorStore: MemoryVectorStore
+function initializeVectorStore() {
+  vectorStore = createMemoryVectorStore({
+    openAIApiKey: storageOpenAIKey.value,
+    modelName: selectedEmbeddingModel.value,
+  })
+}
+
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
 const { data: fileDB } = useIDBKeyval(IDB_KEY.FILE, '')
@@ -40,7 +49,7 @@ const {
   setMessages,
   handleSubmit,
   input,
-  isLoading: useChatLoading,
+  isLoading: isChatLoading,
 } = useChat({
   api: '/api/chat',
   initialMessages: messagesDB.value,
@@ -100,7 +109,7 @@ async function deletePdfData() {
   messagesDB.value = []
   documentTitle.value = ''
 }
-const answerLoading = ref(false)
+const isModelProcessing = computed(() => isSimilaritySearchPending.value || isChatLoading.value)
 const pageLinkElement = ref<HTMLElement>()
 const pageLinkElementIsVisible = ref(false)
 
@@ -119,55 +128,51 @@ function scrollToBottom() {
   })
 }
 
-async function submitHandler(e: Event) {
-  try {
-    if (!input.value || answerLoading.value) return
-    answerLoading.value = true
-    const similarityDocs = await vectorStore.similaritySearch(input.value, 5)
-    const relatedPageNum = similarityDocs
-      .sort((a, b) => a.metadata.page - b.metadata.page)
-      .map(p => p.metadata.page)
-    relatedPagesSet.value = [...new Set(relatedPageNum)]
+function processSimilarityDocs(docs: Awaited<ReturnType<MemoryVectorStore['similaritySearch']>>) {
+  const sortedDocumentPages = docs
+    .sort((a, b) => a.metadata.page - b.metadata.page)
+    .map(p => p.metadata.page)
+  const relatedPages = [...new Set(sortedDocumentPages)]
+  const systemPrompt = docs.map(s => s.pageContent).join('')
 
-    const systemPrompt = similarityDocs.map(s => s.pageContent).join('')
+  return {
+    relatedPages,
+    systemPrompt,
+  }
+}
+const isSimilaritySearchPending = ref(false)
+async function submitHandler(e: Event) {
+  if (!input.value || isModelProcessing.value) return
+  isSimilaritySearchPending.value = true
+
+  try {
+    const similarityDocs = await vectorStore.similaritySearch(input.value, 5)
+    const formatted = processSimilarityDocs(similarityDocs)
+    relatedPagesSet.value = formatted.relatedPages
+
     setMessages([
       ...messages.value,
-      {
-        id: `${new Date().toISOString()}`,
-        role: 'system',
-        content: systemPrompt,
-      },
+      { id: `${new Date().toISOString()}`, role: 'system', content: formatted.systemPrompt },
     ])
+
     handleSubmit(e, {
       allowEmptySubmit: true,
-      headers: {
-        'x-openai-key': storageOpenAIKey.value,
-      },
-      body: {
-        data: {
-          model: selectedChatModel.value,
-        },
-      },
+      headers: { 'x-openai-key': storageOpenAIKey.value },
+      body: { data: { model: selectedChatModel.value } },
     })
   }
   catch (error: unknown) {
     const { message: errorMessage } = error as NuxtError
-    toast.add({
-      title: 'Error',
-      description: errorMessage,
-    })
-    answerLoading.value = false
+    toast.add({ title: 'Error', description: errorMessage })
+  }
+  finally {
+    isSimilaritySearchPending.value = false
   }
 }
 
-watch(useChatLoading, (v) => {
-  if (!v) {
-    answerLoading.value = false
-    messagesDB.value = messages.value.map((m) => {
-      if (isProxy(m)) return toRaw(m)
-      return m
-    })
-  }
+watch(isModelProcessing, (value) => {
+  if (value) return
+  messagesDB.value = messages.value.map(m => isProxy(m) ? toRaw(m) : m)
 })
 
 const pdfSrc = computed(() => {
@@ -177,13 +182,12 @@ const pdfSrc = computed(() => {
 
 const setupScope = effectScope(true)
 onMounted(() => {
-  // TODO: no key condition
-  if (storageOpenAIKey.value) {
-    vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
-  }
+  if (storageOpenAIKey.value) initializeVectorStore()
   setupScope.run(() => {
-    watchEffect(() => setMessages(messagesDB.value))
-    watchEffect(() => vectorStore && vectorStore.addDocuments(documentDB.value))
+    watchEffect(() => {
+      setMessages(messagesDB.value)
+      if (vectorStore) vectorStore.addDocuments(documentDB.value)
+    })
   })
 })
 
@@ -209,18 +213,15 @@ async function clearData() {
   })
 }
 
-const seletedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')
-const selectedChatModel = ref<ChatModel>('gpt-4o-mini')
-
 const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async ({ apiKey, chatModel, embeddingModel }) => {
   const isApiKeyChanged = apiKey !== storageOpenAIKey.value
-  const isEmbeddingModelChanged = embeddingModel !== seletedEmbeddingModel.value
+  const isEmbeddingModelChanged = embeddingModel !== selectedEmbeddingModel.value
   storageOpenAIKey.value = apiKey
   selectedChatModel.value = chatModel
-  seletedEmbeddingModel.value = embeddingModel
+  selectedEmbeddingModel.value = embeddingModel
 
   if (isApiKeyChanged || isEmbeddingModelChanged) {
-    vectorStore = createMemoryVectorStore({ openAIApiKey: storageOpenAIKey.value, modelName: seletedEmbeddingModel.value })
+    initializeVectorStore()
     await vectorStore.addDocuments(documentDB.value)
     if (isApiKeyChanged) {
       toast.add({
@@ -268,7 +269,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
         <div class="overflow-y-auto flex flex-col flex-grow">
           <MessagesList :messages="messages" />
           <div
-            v-show="!answerLoading && messages.length"
+            v-show="!isModelProcessing && messages.length"
             ref="pageLinkElement"
             class="w-3/5 mx-auto pb-10"
           >
@@ -290,10 +291,10 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
               v-model="input"
               class="flex-grow"
               :placeholder="t('input-placeholder')"
-              :disabled="answerLoading || isFileUploading"
+              :disabled="isModelProcessing || isFileUploading"
             />
             <UButton
-              :loading="answerLoading"
+              :loading="isModelProcessing"
               class="ml-2"
               :disabled="isFileUploading"
               type="submit"
@@ -321,7 +322,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
     <SettingsModal
       v-model="isSettingModalOpen"
       :api-key="storageOpenAIKey"
-      :embedding-model="seletedEmbeddingModel"
+      :embedding-model="selectedEmbeddingModel"
       :chat-model="selectedChatModel"
       @clear-data="clearData"
       @close="onSettingModalClose"

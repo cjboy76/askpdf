@@ -29,9 +29,6 @@ const props = defineProps<{ messages: Message[] }>()
           {{ role === 'assistant' ? 'AskPDF' : t('you') }}
         </div>
         <markdown :source="content" />
-        <!-- <p>
-          {{ content }}
-        </p> -->
       </div>
     </div>
   </div>

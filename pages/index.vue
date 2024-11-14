@@ -266,7 +266,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
         </client-only>
       </div>
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
-        <div class="overflow-y-auto flex flex-col flex-grow">
+        <div class="overflow-y-auto flex flex-col flex-grow scroller">
           <MessagesList :messages="messages" />
           <div
             v-show="!isModelProcessing && messages.length"
@@ -281,6 +281,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
             >
               #{{ page }}</span>
           </div>
+          <div id="scroller-anchor" />
         </div>
         <div class="h-12 pt-2 relative">
           <form
@@ -339,5 +340,15 @@ body {
 .dark body {
   background-color: #15202b;
   color: #ebf4f1;
+}
+</style>
+
+<style scoped>
+.scroller * {
+  overflow-anchor: none;
+}
+#scroller-anchor {
+  overflow-anchor: auto;
+  height: 1px;
 }
 </style>

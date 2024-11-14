@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     const result = await streamText({
       model: openai(model),
       messages: convertToCoreMessages(messages),
+      system: 'You are a teacher. ' + 'Return value in markdown format',
     })
 
     return result.toDataStreamResponse()

@@ -20,8 +20,10 @@
     "@vercel/analytics": "^1.3.2",
     "@vueuse/integrations": "^11.1.0",
     "ai": "^3.4.20",
+    "highlight.js": "^11.10.0",
     "idb-keyval": "^6.2.1",
     "langchain": "^0.3.4",
+    "markdown-it": "^14.1.0",
     "openai": "^4.68.4",
     "pdfjs-dist": "4.7.76"
   },
@@ -33,6 +35,7 @@
     "@nuxtjs/color-mode": "^3.5.2",
     "@nuxtjs/i18n": "^8.5.5",
     "@stylistic/eslint-plugin-js": "^2.10.0",
+    "@types/markdown-it": "^14.1.2",
     "@vicons/ionicons5": "^0.12.0",
     "@vueuse/core": "^11.1.0",
     "@vueuse/nuxt": "^11.1.0",

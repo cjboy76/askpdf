@@ -28,7 +28,7 @@ const props = defineProps<{ messages: Message[] }>()
         <div class="h-8 mb-2 grid items-center font-bold">
           {{ role === 'assistant' ? 'AskPDF' : t('you') }}
         </div>
-        <markdown :source="content" />
+        <MarkdownBlock :source="content" />
       </div>
     </div>
   </div>

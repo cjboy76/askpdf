@@ -121,7 +121,7 @@ const { stop: stopIntersectionObserver } = useIntersectionObserver(
 )
 
 function scrollToBottom() {
-  pageLinkElement.value?.scrollIntoView({
+  document.querySelector('#scroller-anchor')?.scrollIntoView({
     block: 'end',
     inline: 'nearest',
     behavior: 'smooth',
@@ -189,13 +189,11 @@ onMounted(() => {
       if (vectorStore) vectorStore.addDocuments(documentDB.value)
     })
   })
+  setTimeout(scrollToBottom, 1000)
 })
-
+// NOTE: wait for indexedDB promises resolved
 watch([isDocumentFinished, isMessagesFinished], ([a, b]) => {
-  if (a && b) {
-    setupScope.stop()
-    scrollToBottom()
-  }
+  if (a && b) setupScope.stop()
 })
 
 onBeforeUnmount(() => {

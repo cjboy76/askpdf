@@ -14,6 +14,9 @@ importers:
       '@ai-sdk/vue':
         specifier: ^0.0.57
         version: 0.0.57(vue@3.5.12(typescript@5.6.3))(zod@3.23.8)
+      '@iconify-json/uil':
+        specifier: ^1.2.1
+        version: 1.2.1
       '@langchain/community':
         specifier: ^0.3.9
         version: 0.3.14(@ibm-cloud/watsonx-ai@1.1.2)(@langchain/core@0.3.18(openai@4.72.0(zod@3.23.8)))(axios@1.7.4)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(ioredis@5.4.1)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.72.0(zod@3.23.8))(ws@8.18.0)
@@ -737,6 +740,9 @@ packages:
 
   '@iconify-json/heroicons@1.2.1':
     resolution: {integrity: sha512-TkKfS5U27kE5MXmSGLzPoz95BP5VA9xEJXwJFwmPMVLX+xyWq0OkoiWTUXB0uAoQODpb8BaRpzSydItrq9fIRA==}
+
+  '@iconify-json/uil@1.2.1':
+    resolution: {integrity: sha512-bQPtDp1nVaDL+ejECPENHJalspCQCZreCJ2LHWazm0pfoz34afKAQKMSb1mH8K/CPnibCQTM29AvXrHMpyjbtg==}
 
   '@iconify/collections@1.0.482':
     resolution: {integrity: sha512-LmtAYvUGvBuMSVihOOmlZmYenN1+YyvW9D/hHKcVa6dxesOO7G1ru08JNeSQcdbKSaO2xbKeKQ9SeB4huy9scQ==}
@@ -6037,6 +6043,10 @@ snapshots:
       - supports-color
 
   '@iconify-json/heroicons@1.2.1':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/uil@1.2.1':
     dependencies:
       '@iconify/types': 2.0.0
 

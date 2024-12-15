@@ -42,6 +42,13 @@ const { isPending: isFileUploading } = usePdfUploader()
       </Transition>
     </div>
     <div class="flex justify-end items-center">
+      <UButton
+        icon="i-uil-github"
+        color="gray"
+        variant="ghost"
+        to="https://github.com/cjboy76/askpdf"
+        target="_blank"
+      />
       <ClientOnly>
         <UButton
           class="mx-1"

@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { useVectorStore } from '~/stores/useVectorStore'
-
-const vectorStore = useVectorStore()
+const vectorManager = useVectorManager()
 const { t } = useI18n()
 const colorMode = useColorMode()
 const isDark = computed({
@@ -15,17 +13,16 @@ const isDark = computed({
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading } = usePdfUploader()
-const { documents, summaryTitle } = useIDBKeyvalStore()
+const { summaryTitle } = useIDBKeyvalStore()
 
-watch(documents, () => {
-  identifyDocumentThemes()
-})
+watch(() => vectorManager.store, (vs) => {
+  if (vs && vs.memoryVectors.length > 0 && !summaryTitle.value) identifyDocumentThemes()
+}, { immediate: true, once: true })
 
 const { chatModel, apiKey } = useLLMConfig()
 
 async function identifyDocumentThemes() {
-  if (!vectorStore.isInitialized) return
-  const result = await vectorStore.similaritySearch('Main topic of this book')
+  const result = await vectorManager.similaritySearch('Main topic of this book')
   const docs = result.map(s => s.pageContent).join('')
   if (!docs) return
   summaryTitle.value = await $fetch('/api/document/theme', {

@@ -4,21 +4,21 @@ import { defineStore } from 'pinia'
 import type { Document } from '@langchain/core/documents'
 
 type State = {
-  vectorStore: MemoryVectorStore | null
+  store: MemoryVectorStore | null
   apiKey: string
   embeddingsModelName: string
 }
 
-export const useVectorStore = defineStore('VectorStore', {
+export const useVectorManager = defineStore('VectorStore', {
   state: (): State => ({
-    vectorStore: null,
+    store: null,
     apiKey: '',
     embeddingsModelName: '',
   }),
 
   getters: {
     isInitialized(state) {
-      return !!state.vectorStore
+      return !!state.store
     },
   },
 
@@ -28,28 +28,28 @@ export const useVectorStore = defineStore('VectorStore', {
       try {
         this.apiKey = apiKey
         this.embeddingsModelName = model
-        this.vectorStore = new MemoryVectorStore(
+        this.store = new MemoryVectorStore(
           new OpenAIEmbeddings({
             openAIApiKey: this.apiKey,
             modelName: this.embeddingsModelName,
           }),
         )
-        console.log('Vector Store 初始化成功')
+        console.log('Vector Store initialized!')
       }
       catch (error) {
-        console.error('初始化失敗:', error)
-        throw error // 讓外部處理錯誤
+        console.error('Failed to initialize:', error)
+        throw error
       }
     },
     similaritySearch(query: string, k?: number) {
-      if (!this.vectorStore) return []
-      return this.vectorStore.similaritySearch(query, k)
+      if (!this.store) return []
+      return this.store.similaritySearch(query, k)
     },
     addDocuments(documents: Document<Record<string, string>>[]) {
-      return this.vectorStore?.addDocuments(documents)
+      return this.store?.addDocuments(documents)
     },
     clear() {
-      this.vectorStore = null
+      this.store = null
       this.apiKey = ''
       this.embeddingsModelName = ''
     },

@@ -2,12 +2,11 @@
 import { useChat } from '@ai-sdk/vue'
 import type { SettingsModal } from '#build/components'
 import type { NuxtError } from '#app'
-import { useVectorStore } from '~/stores/useVectorStore'
 
 const { t } = useI18n()
 const toast = useToast()
 const { apiKey, chatModel, embeddingsModel } = useLLMConfig()
-const vectorStore = useVectorStore()
+const vectorManager = useVectorManager()
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
@@ -38,13 +37,13 @@ async function uploadPdf(file: File) {
     })
     return
   }
+  removePDF()
   try {
-    await removePDF()
     const res = await upload(file)
     if (!res) return
     const { documents, pdfToBase64File } = res
     idbDocuments.value = documents
-    await vectorStore.addDocuments(documents)
+    await vectorManager.addDocuments(documents)
     idbFile.value = pdfToBase64File
   }
   catch {
@@ -55,8 +54,8 @@ async function uploadPdf(file: File) {
   }
 }
 
-async function removePDF() {
-  vectorStore.clear()
+function removePDF() {
+  vectorManager.clear()
   idbFile.value = ''
   relatedPages.value = []
   idbDocuments.value = []
@@ -65,12 +64,12 @@ async function removePDF() {
 }
 const isModelProcessing = computed(() => isSimilaritySearchPending.value || isChatLoading.value)
 const pageLinkElement = ref<HTMLElement>()
-const pageLinkElementIsVisible = ref(false)
+const isPageLinkVisible = ref(false)
 
 const { stop: stopIntersectionObserver } = useIntersectionObserver(
   pageLinkElement,
   ([{ isIntersecting }]) => {
-    pageLinkElementIsVisible.value = isIntersecting
+    isPageLinkVisible.value = isIntersecting
   },
 )
 
@@ -88,7 +87,7 @@ async function submitHandler(e: Event) {
   isSimilaritySearchPending.value = true
 
   try {
-    const similarityDocs = await vectorStore.similaritySearch(input.value, 5)
+    const similarityDocs = await vectorManager.similaritySearch(input.value, 5)
     const formatted = processSimilarityDocs(similarityDocs)
     relatedPages.value = formatted.relatedPages
 
@@ -122,16 +121,16 @@ const pdfSrc = computed(() => {
   return URL.createObjectURL(base64ToPdf(idbFile.value))
 })
 
-onMounted(() => {
-  setMessages(idbMessages.value)
-})
+watch([apiKey, embeddingsModel, idbDocuments], ([a, e, d]) => {
+  if (!a || !e || !d.length) return
+  vectorManager.clear()
+  vectorManager.initialize(a, e)
+  vectorManager.addDocuments(d)
+}, { immediate: true })
 
-watch([apiKey, embeddingsModel], (newValue, oldValue) => {
-  if (newValue !== oldValue) return
-  vectorStore.clear()
-  vectorStore.initialize(apiKey.value, embeddingsModel.value)
-  vectorStore.addDocuments(idbDocuments.value)
-})
+watch(idbMessages, (messagesFromStorage) => {
+  setMessages(messagesFromStorage)
+}, { once: true })
 
 onBeforeUnmount(() => {
   if (pdfSrc.value) URL.revokeObjectURL(pdfSrc.value)
@@ -220,7 +219,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
             </UButton>
           </form>
           <UButton
-            v-show="!pageLinkElementIsVisible && messages.length"
+            v-show="!isPageLinkVisible && messages.length"
             circle
             class="absolute -top-8 left-1/2 -translate-x-1/2 color-zinc-100"
             icon="i-heroicons-chevron-down"

@@ -9,7 +9,7 @@ export async function usePDFLoader(file: File) {
       statusMessage: 'Invalid file',
     })
   }
-  const unitArray = await fileToUint8Array(file)
+  const unitArray = await file.arrayBuffer()
   const pdfDocument = await loadPdf(unitArray)
   const data = await extractPdfContent(pdfDocument)
   const raw = data.reduce((prev, curr) => prev + curr.textContent, '')
@@ -51,11 +51,4 @@ function extractPdfContent(pdfDocument: PDFDocumentProxy) {
     return getPageContent(pdfDocument, index + 1)
   })
   return Promise.all(pool)
-}
-
-async function fileToUint8Array(file: File) {
-  const buffer = await file.arrayBuffer()
-  const uint8Array = new Uint8Array(buffer)
-
-  return uint8Array
 }

@@ -8,6 +8,15 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/eslint',
     '@nuxtjs/color-mode',
+    [
+      '@pinia/nuxt',
+      {
+        autoImports: [
+          'defineStore',
+          ['defineStore', 'definePiniaStore'],
+        ],
+      },
+    ],
   ],
   ssr: true,
   devtools: { enabled: process.env.NODE_ENV === 'development' },

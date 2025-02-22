@@ -2,47 +2,35 @@
 import { type Message, useChat } from '@ai-sdk/vue'
 import type { ChatModel } from 'openai/resources/index.mjs'
 import type { EmbeddingModel } from 'openai/src/resources/embeddings.js'
-import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
-import type { NuxtError } from 'nuxt/app'
-import type { Document as TDocument } from '@langchain/core/documents'
-import { useI18n } from 'vue-i18n'
 import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
+import type { Document } from '@langchain/core/documents'
 import { useStorage } from '@vueuse/core'
-import FileModal from '~/components/FileModal.vue'
 import { IDB_KEY } from '~/share'
-import MessagesList from '~/components/MessagesList.vue'
-import SettingsModal from '~/components/SettingsModal.vue'
-import { useAppModal } from '~/composables/useAppModal'
-import { usePdfUploader } from '~/composables/usePdfUploader'
+import type { SettingsModal } from '#build/components'
+import type { NuxtError } from '#app'
+import { useVectorStore } from '~/stores/useVectorStore'
 
 const { t } = useI18n()
 const toast = useToast()
-const storageOpenAIKey = useStorage('openai_key', '')
+const storageOpenAIKey = useStorage('askpdf_openai_key', '')
 
 // NOTE: MemoryVectorStore https://github.com/langchain-ai/langchainjs/blob/f75e99bee43c03996425ee1a72fde2472e1c2020/langchain/src/vectorstores/memory.ts#L142
 const selectedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')
 const selectedChatModel = ref<ChatModel>('gpt-4o-mini')
-let vectorStore: MemoryVectorStore
-function initializeVectorStore() {
-  vectorStore = createMemoryVectorStore({
-    openAIApiKey: storageOpenAIKey.value,
-    modelName: selectedEmbeddingModel.value,
-  })
-}
+const vectorStore = useVectorStore()
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
 const { data: fileDB } = useIDBKeyval(IDB_KEY.FILE, '')
-const { data: documentDB, isFinished: isDocumentFinished } = useIDBKeyval<TDocument<Record<string, string>>[]>(
+const { data: documentDB } = useIDBKeyval<Document<Record<string, string>>[]>(
   IDB_KEY.DOCUMENTS,
   [],
 )
-const { data: messagesDB, isFinished: isMessagesFinished } = useIDBKeyval<Message[]>(IDB_KEY.MESSAGES, [])
+const { data: messagesDB } = useIDBKeyval<Message[]>(IDB_KEY.MESSAGES, [])
 const { data: relatedPagesSet } = useIDBKeyval<number[]>(
   IDB_KEY.RELATED_PAGES,
   [],
 )
-const { data: documentTitle } = useIDBKeyval(IDB_KEY.DOC_TITLE, '')
 
 const {
   messages,
@@ -70,14 +58,13 @@ async function uploadPdf(file: File) {
     return
   }
   try {
-    await deletePdfData()
+    await removePDF()
     const res = await upload(file)
     if (!res) return
     const { documents, pdfToBase64File } = res
     documentDB.value = documents
     await vectorStore.addDocuments(documents)
     fileDB.value = pdfToBase64File
-    identifyDocumentThemes()
   }
   catch {
     toast.add({
@@ -87,27 +74,13 @@ async function uploadPdf(file: File) {
   }
 }
 
-async function identifyDocumentThemes() {
-  const result = await vectorStore.similaritySearch('Main topic of this book')
-  const docs = result.map(s => s.pageContent).join('')
-  if (!docs) return
-  documentTitle.value = await $fetch('/api/document/theme', {
-    method: 'POST',
-    body: { docs, model: selectedChatModel.value },
-    headers: {
-      'x-openai-key': storageOpenAIKey.value,
-    },
-  })
-}
-
-async function deletePdfData() {
-  if (vectorStore && vectorStore.embeddings) vectorStore.memoryVectors = []
+async function removePDF() {
+  vectorStore.clear()
   fileDB.value = ''
   relatedPagesSet.value = []
   documentDB.value = []
   setMessages([])
   messagesDB.value = []
-  documentTitle.value = ''
 }
 const isModelProcessing = computed(() => isSimilaritySearchPending.value || isChatLoading.value)
 const pageLinkElement = ref<HTMLElement>()
@@ -128,18 +101,6 @@ function scrollToBottom() {
   })
 }
 
-function processSimilarityDocs(docs: Awaited<ReturnType<MemoryVectorStore['similaritySearch']>>) {
-  const sortedDocumentPages = docs
-    .sort((a, b) => a.metadata.page - b.metadata.page)
-    .map(p => p.metadata.page)
-  const relatedPages = [...new Set(sortedDocumentPages)]
-  const systemPrompt = docs.map(s => s.pageContent).join('')
-
-  return {
-    relatedPages,
-    systemPrompt,
-  }
-}
 const isSimilaritySearchPending = ref(false)
 async function submitHandler(e: Event) {
   if (!input.value || isModelProcessing.value) return
@@ -180,22 +141,15 @@ const pdfSrc = computed(() => {
   return URL.createObjectURL(base64ToPdf(fileDB.value))
 })
 
-const setupScope = effectScope(true)
 onMounted(() => {
-  if (storageOpenAIKey.value) initializeVectorStore()
-  setupScope.run(() => {
-    watchEffect(() => {
-      setMessages(messagesDB.value)
-      if (vectorStore) vectorStore.addDocuments(documentDB.value)
-    })
-  })
+  setMessages(messagesDB.value)
 })
 
-watch([isDocumentFinished, isMessagesFinished], ([a, b]) => {
-  if (a && b) {
-    setupScope.stop()
-    scrollToBottom()
-  }
+watch([storageOpenAIKey, selectedEmbeddingModel], (newValue, oldValue) => {
+  if (newValue !== oldValue) return
+  vectorStore.clear()
+  vectorStore.initialize(storageOpenAIKey.value, selectedEmbeddingModel.value)
+  vectorStore.addDocuments(documentDB.value)
 })
 
 onBeforeUnmount(() => {
@@ -206,30 +160,11 @@ onBeforeUnmount(() => {
 const viewerRef = ref()
 
 async function clearData() {
-  await deletePdfData()
+  await removePDF()
   toast.add({
     title: 'Success',
     description: t('clear-data-success'),
   })
-}
-
-const onSettingModalClose: InstanceType<typeof SettingsModal>['onClose'] = async ({ apiKey, chatModel, embeddingModel }) => {
-  const isApiKeyChanged = apiKey !== storageOpenAIKey.value
-  const isEmbeddingModelChanged = embeddingModel !== selectedEmbeddingModel.value
-  storageOpenAIKey.value = apiKey
-  selectedChatModel.value = chatModel
-  selectedEmbeddingModel.value = embeddingModel
-
-  if (isApiKeyChanged || isEmbeddingModelChanged) {
-    initializeVectorStore()
-    await vectorStore.addDocuments(documentDB.value)
-    if (isApiKeyChanged) {
-      toast.add({
-        title: 'Success',
-        description: t('open-ai-key-success'),
-      })
-    }
-  }
 }
 
 const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversation'] = () => {
@@ -240,7 +175,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
 
 <template>
   <div class="flex flex-col">
-    <AppHeader :title="documentTitle" />
+    <AppHeader />
     <div class="grid grid-cols-6 gap-2 pb-2 px-2">
       <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
         <client-only
@@ -326,7 +261,6 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
       :embedding-model="selectedEmbeddingModel"
       :chat-model="selectedChatModel"
       @clear-data="clearData"
-      @close="onSettingModalClose"
       @delete-conversation="onDeleteConversation"
     />
   </div>

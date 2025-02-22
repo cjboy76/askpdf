@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
+import type { Document } from '@langchain/core/documents'
 import { useAppModal } from '~/composables/useAppModal'
 import { usePdfUploader } from '~/composables/usePdfUploader'
+import { IDB_KEY } from '~/share'
+import { useVectorStore } from '~/stores/useVectorStore'
+import { useLLMConfig } from '~/composables/useLLMConfig'
 
-const { title } = defineProps<{ title: string }>()
-
+const vectorStore = useVectorStore()
 const { t } = useI18n()
 const colorMode = useColorMode()
 const isDark = computed({
@@ -16,8 +20,33 @@ const isDark = computed({
 })
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
-
 const { isPending: isFileUploading } = usePdfUploader()
+
+const { data: documentDB } = useIDBKeyval<Document<Record<string, string>>[]>(
+  IDB_KEY.DOCUMENTS,
+  [],
+)
+
+const { data: summaryTitle } = useIDBKeyval(IDB_KEY.SUMMARY_TITLE, '')
+
+watch(documentDB, () => {
+  identifyDocumentThemes()
+})
+
+const { chatModel, apiKey } = useLLMConfig()
+
+async function identifyDocumentThemes() {
+  const result = await vectorStore.similaritySearch('Main topic of this book')
+  const docs = result.map(s => s.pageContent).join('')
+  if (!docs) return
+  summaryTitle.value = await $fetch('/api/document/theme', {
+    method: 'POST',
+    body: { docs, model: chatModel.value },
+    headers: {
+      'x-openai-key': apiKey.value,
+    },
+  })
+}
 </script>
 
 <template>
@@ -27,17 +56,17 @@ const { isPending: isFileUploading } = usePdfUploader()
         AskPDF
       </div>
       <p
-        v-if="title"
+        v-if="summaryTitle"
         class="mx-1 text-stone-600 dark:text-stone-300"
       >
         /
       </p>
       <Transition name="pop-up">
         <p
-          v-if="title"
+          v-if="summaryTitle"
           class="text-stone-600 dark:text-stone-300"
         >
-          {{ title }}
+          {{ summaryTitle }}
         </p>
       </Transition>
     </div>

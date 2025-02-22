@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ChatModel, EmbeddingModel } from 'openai/resources/index.mjs'
+import { useLLMConfig } from '~/composables/useLLMConfig'
 
 type State = {
   embeddingModel: EmbeddingModel
@@ -16,8 +17,20 @@ const emit = defineEmits<{
 }>()
 const model = defineModel<boolean>({ default: false })
 const state = reactive({ ...structuredClone(toRaw(props)) })
+const toast = useToast()
+
+const llmConfig = useLLMConfig()
 
 function onClose() {
+  if (state.apiKey !== llmConfig.apiKey.value) {
+    toast.add({
+      title: 'Success',
+      description: t('open-ai-key-success'),
+    })
+  }
+  llmConfig.apiKey.value = state.apiKey
+  llmConfig.chatModel.value = state.chatModel
+  llmConfig.embeddingsModelName.value = state.embeddingModel
   model.value = false
   emit('close', toRaw(state))
 }

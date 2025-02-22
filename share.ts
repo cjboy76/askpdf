@@ -10,5 +10,5 @@ export const IDB_KEY = {
   DOCUMENTS: 'askpdf-docs',
   MESSAGES: 'askpdf-msg',
   RELATED_PAGES: 'askpdf-related-pages',
-  DOC_TITLE: 'askpdf-doc-title',
+  SUMMARY_TITLE: 'askpdf-summary-title',
 }

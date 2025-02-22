@@ -9,17 +9,19 @@ type State = {
 }
 
 const { t } = useI18n()
-const props = defineProps<State>()
+const toast = useToast()
+const llmConfig = useLLMConfig()
 const emit = defineEmits<{
   clearData: []
   deleteConversation: []
   close: [value: State]
 }>()
 const model = defineModel<boolean>({ default: false })
-const state = reactive({ ...structuredClone(toRaw(props)) })
-const toast = useToast()
-
-const llmConfig = useLLMConfig()
+const state = reactive({
+  apiKey: toRaw(llmConfig.apiKey.value),
+  chatModel: toRaw(llmConfig.chatModel.value),
+  embeddingModel: toRaw(llmConfig.embeddingsModel.value),
+})
 
 function onClose() {
   if (state.apiKey !== llmConfig.apiKey.value) {
@@ -30,7 +32,7 @@ function onClose() {
   }
   llmConfig.apiKey.value = state.apiKey
   llmConfig.chatModel.value = state.chatModel
-  llmConfig.embeddingsModelName.value = state.embeddingModel
+  llmConfig.embeddingsModel.value = state.embeddingModel
   model.value = false
   emit('close', toRaw(state))
 }

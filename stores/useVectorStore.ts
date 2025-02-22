@@ -23,6 +23,7 @@ export const useVectorStore = defineStore('VectorStore', {
   },
 
   actions: {
+    // NOTE: MemoryVectorStore https://github.com/langchain-ai/langchainjs/blob/f75e99bee43c03996425ee1a72fde2472e1c2020/langchain/src/vectorstores/memory.ts#L142
     initialize(apiKey: string, model: string) {
       try {
         this.apiKey = apiKey

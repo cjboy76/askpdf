@@ -1,36 +1,19 @@
 <script setup lang="ts">
-import { type Message, useChat } from '@ai-sdk/vue'
-import type { ChatModel } from 'openai/resources/index.mjs'
-import type { EmbeddingModel } from 'openai/src/resources/embeddings.js'
-import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
-import type { Document } from '@langchain/core/documents'
-import { useStorage } from '@vueuse/core'
-import { IDB_KEY } from '~/share'
+import { useChat } from '@ai-sdk/vue'
 import type { SettingsModal } from '#build/components'
 import type { NuxtError } from '#app'
 import { useVectorStore } from '~/stores/useVectorStore'
+import { useLLMConfig } from '~/composables/useLLMConfig'
+import { useIDBKeyvalStore } from '~/composables/useIDBKeyvalStore'
 
 const { t } = useI18n()
 const toast = useToast()
-const storageOpenAIKey = useStorage('askpdf_openai_key', '')
-
-// NOTE: MemoryVectorStore https://github.com/langchain-ai/langchainjs/blob/f75e99bee43c03996425ee1a72fde2472e1c2020/langchain/src/vectorstores/memory.ts#L142
-const selectedEmbeddingModel = ref<EmbeddingModel>('text-embedding-3-small')
-const selectedChatModel = ref<ChatModel>('gpt-4o-mini')
+const { apiKey, chatModel, embeddingsModel } = useLLMConfig()
 const vectorStore = useVectorStore()
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
-const { data: fileDB } = useIDBKeyval(IDB_KEY.FILE, '')
-const { data: documentDB } = useIDBKeyval<Document<Record<string, string>>[]>(
-  IDB_KEY.DOCUMENTS,
-  [],
-)
-const { data: messagesDB } = useIDBKeyval<Message[]>(IDB_KEY.MESSAGES, [])
-const { data: relatedPagesSet } = useIDBKeyval<number[]>(
-  IDB_KEY.RELATED_PAGES,
-  [],
-)
+const { file: idbFile, documents: idbDocuments, messages: idbMessages, relatedPages } = useIDBKeyvalStore()
 
 const {
   messages,
@@ -40,7 +23,7 @@ const {
   isLoading: isChatLoading,
 } = useChat({
   api: '/api/chat',
-  initialMessages: messagesDB.value,
+  initialMessages: idbMessages.value,
   onError: (error) => {
     toast.add({
       title: 'Error',
@@ -50,7 +33,7 @@ const {
 })
 
 async function uploadPdf(file: File) {
-  if (!storageOpenAIKey.value) {
+  if (!apiKey.value) {
     toast.add({
       title: 'Info',
       description: t('open-ai-key-required'),
@@ -62,9 +45,9 @@ async function uploadPdf(file: File) {
     const res = await upload(file)
     if (!res) return
     const { documents, pdfToBase64File } = res
-    documentDB.value = documents
+    idbDocuments.value = documents
     await vectorStore.addDocuments(documents)
-    fileDB.value = pdfToBase64File
+    idbFile.value = pdfToBase64File
   }
   catch {
     toast.add({
@@ -76,11 +59,11 @@ async function uploadPdf(file: File) {
 
 async function removePDF() {
   vectorStore.clear()
-  fileDB.value = ''
-  relatedPagesSet.value = []
-  documentDB.value = []
+  idbFile.value = ''
+  relatedPages.value = []
+  idbDocuments.value = []
   setMessages([])
-  messagesDB.value = []
+  idbMessages.value = []
 }
 const isModelProcessing = computed(() => isSimilaritySearchPending.value || isChatLoading.value)
 const pageLinkElement = ref<HTMLElement>()
@@ -109,7 +92,7 @@ async function submitHandler(e: Event) {
   try {
     const similarityDocs = await vectorStore.similaritySearch(input.value, 5)
     const formatted = processSimilarityDocs(similarityDocs)
-    relatedPagesSet.value = formatted.relatedPages
+    relatedPages.value = formatted.relatedPages
 
     setMessages([
       ...messages.value,
@@ -118,8 +101,8 @@ async function submitHandler(e: Event) {
 
     handleSubmit(e, {
       allowEmptySubmit: true,
-      headers: { 'x-openai-key': storageOpenAIKey.value },
-      body: { data: { model: selectedChatModel.value } },
+      headers: { 'x-openai-key': apiKey.value },
+      body: { data: { model: chatModel.value } },
     })
   }
   catch (error: unknown) {
@@ -133,23 +116,23 @@ async function submitHandler(e: Event) {
 
 watch(isModelProcessing, (value) => {
   if (value) return
-  messagesDB.value = messages.value.map(m => isProxy(m) ? toRaw(m) : m)
+  idbMessages.value = messages.value.map(m => isProxy(m) ? toRaw(m) : m)
 })
 
 const pdfSrc = computed(() => {
-  if (!fileDB.value) return ''
-  return URL.createObjectURL(base64ToPdf(fileDB.value))
+  if (!idbFile.value) return ''
+  return URL.createObjectURL(base64ToPdf(idbFile.value))
 })
 
 onMounted(() => {
-  setMessages(messagesDB.value)
+  setMessages(idbMessages.value)
 })
 
-watch([storageOpenAIKey, selectedEmbeddingModel], (newValue, oldValue) => {
+watch([apiKey, embeddingsModel], (newValue, oldValue) => {
   if (newValue !== oldValue) return
   vectorStore.clear()
-  vectorStore.initialize(storageOpenAIKey.value, selectedEmbeddingModel.value)
-  vectorStore.addDocuments(documentDB.value)
+  vectorStore.initialize(apiKey.value, embeddingsModel.value)
+  vectorStore.addDocuments(idbDocuments.value)
 })
 
 onBeforeUnmount(() => {
@@ -169,7 +152,7 @@ async function clearData() {
 
 const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversation'] = () => {
   setMessages([])
-  messagesDB.value = []
+  idbMessages.value = []
 }
 </script>
 
@@ -209,7 +192,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
             class="w-3/5 mx-auto pb-10"
           >
             <span
-              v-for="(page, index) of relatedPagesSet"
+              v-for="(page, index) of relatedPages"
               :key="index"
               class="font-bold p-1 rounded cursor-pointer hover:bg-primary hover:underline"
               @click="viewerRef.setViewerPage(page)"
@@ -257,9 +240,6 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
     />
     <SettingsModal
       v-model="isSettingModalOpen"
-      :api-key="storageOpenAIKey"
-      :embedding-model="selectedEmbeddingModel"
-      :chat-model="selectedChatModel"
       @clear-data="clearData"
       @delete-conversation="onDeleteConversation"
     />

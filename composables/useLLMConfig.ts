@@ -12,11 +12,11 @@ export const useLLMConfig = () => {
       set: newValue => openAIKeyFromStorage.value = newValue,
     }),
     chatModel: computed({
-      get: () => chatModelName.value,
+      get: () => chatModelName.value as ChatModel,
       set: (newValue: ChatModel) => chatModelName.value = newValue,
     }),
-    embeddingsModelName: computed({
-      get: () => embeddingsModelName.value,
+    embeddingsModel: computed({
+      get: () => embeddingsModelName.value as EmbeddingModel,
       set: (newValue: EmbeddingModel) => embeddingsModelName.value = newValue,
     }),
   }

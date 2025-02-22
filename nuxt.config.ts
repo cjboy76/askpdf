@@ -50,4 +50,7 @@ export default defineNuxtConfig({
     locales: ['en-US', 'zh'],
     vueI18n: './i18n.config.ts', // if you are using custom path, default
   },
+  pinia: {
+    storesDirs: ['./stores/**'],
+  },
 })

@@ -3,8 +3,6 @@ import { useChat } from '@ai-sdk/vue'
 import type { SettingsModal } from '#build/components'
 import type { NuxtError } from '#app'
 import { useVectorStore } from '~/stores/useVectorStore'
-import { useLLMConfig } from '~/composables/useLLMConfig'
-import { useIDBKeyvalStore } from '~/composables/useIDBKeyvalStore'
 
 const { t } = useI18n()
 const toast = useToast()

@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import { useAppModal } from '~/composables/useAppModal'
-import { usePdfUploader } from '~/composables/usePdfUploader'
 import { useVectorStore } from '~/stores/useVectorStore'
-import { useLLMConfig } from '~/composables/useLLMConfig'
-import { useIDBKeyvalStore } from '~/composables/useIDBKeyvalStore'
 
 const vectorStore = useVectorStore()
 const { t } = useI18n()
@@ -28,6 +24,7 @@ watch(documents, () => {
 const { chatModel, apiKey } = useLLMConfig()
 
 async function identifyDocumentThemes() {
+  if (!vectorStore.isInitialized) return
   const result = await vectorStore.similaritySearch('Main topic of this book')
   const docs = result.map(s => s.pageContent).join('')
   if (!docs) return

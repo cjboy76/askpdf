@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { ChatModel, EmbeddingModel } from 'openai/resources/index.mjs'
-import { useLLMConfig } from '~/composables/useLLMConfig'
 
 type State = {
   embeddingModel: EmbeddingModel

@@ -21,10 +21,12 @@ export const useIDBKeyvalStore = () => {
     IDB_KEY.RELATED_PAGES,
     [],
   )
+  const { data: summaryTitle } = useIDBKeyval(IDB_KEY.SUMMARY_TITLE, '')
   return {
     file,
     documents,
     messages,
     relatedPages,
+    summaryTitle,
   }
 }

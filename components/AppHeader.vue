@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { useIDBKeyval } from '@vueuse/integrations/useIDBKeyval'
-import type { Document } from '@langchain/core/documents'
 import { useAppModal } from '~/composables/useAppModal'
 import { usePdfUploader } from '~/composables/usePdfUploader'
-import { IDB_KEY } from '~/share'
 import { useVectorStore } from '~/stores/useVectorStore'
 import { useLLMConfig } from '~/composables/useLLMConfig'
+import { useIDBKeyvalStore } from '~/composables/useIDBKeyvalStore'
 
 const vectorStore = useVectorStore()
 const { t } = useI18n()
@@ -21,15 +19,9 @@ const isDark = computed({
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading } = usePdfUploader()
+const { documents, summaryTitle } = useIDBKeyvalStore()
 
-const { data: documentDB } = useIDBKeyval<Document<Record<string, string>>[]>(
-  IDB_KEY.DOCUMENTS,
-  [],
-)
-
-const { data: summaryTitle } = useIDBKeyval(IDB_KEY.SUMMARY_TITLE, '')
-
-watch(documentDB, () => {
+watch(documents, () => {
   identifyDocumentThemes()
 })
 

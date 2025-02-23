@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import { useAppModal } from '~/composables/useAppModal'
-import { usePdfUploader } from '~/composables/usePdfUploader'
-
-const { title } = defineProps<{ title: string }>()
-
+const vectorManager = useVectorManager()
 const { t } = useI18n()
 const colorMode = useColorMode()
 const isDark = computed({
@@ -16,8 +12,27 @@ const isDark = computed({
 })
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
-
 const { isPending: isFileUploading } = usePdfUploader()
+const { summaryTitle } = useIDBKeyvalStore()
+
+watch(() => vectorManager.store, (vs) => {
+  if (vs && vs.memoryVectors.length > 0 && !summaryTitle.value) identifyDocumentThemes()
+}, { immediate: true, once: true })
+
+const { chatModel, apiKey } = useLLMConfig()
+
+async function identifyDocumentThemes() {
+  const result = await vectorManager.similaritySearch('Main topic of this book')
+  const docs = result.map(s => s.pageContent).join('')
+  if (!docs) return
+  summaryTitle.value = await $fetch('/api/document/theme', {
+    method: 'POST',
+    body: { docs, model: chatModel.value },
+    headers: {
+      'x-openai-key': apiKey.value,
+    },
+  })
+}
 </script>
 
 <template>
@@ -27,17 +42,17 @@ const { isPending: isFileUploading } = usePdfUploader()
         AskPDF
       </div>
       <p
-        v-if="title"
+        v-if="summaryTitle"
         class="mx-1 text-stone-600 dark:text-stone-300"
       >
         /
       </p>
       <Transition name="pop-up">
         <p
-          v-if="title"
+          v-if="summaryTitle"
           class="text-stone-600 dark:text-stone-300"
         >
-          {{ title }}
+          {{ summaryTitle }}
         </p>
       </Transition>
     </div>

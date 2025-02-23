@@ -4,11 +4,3 @@ export const STATE_KEY = {
   TOGGLE_FILE_MODAL: 'toggle-file-modal',
   TOGGLE_SETTING_MODAL: 'toggle-setting-modal',
 }
-
-export const IDB_KEY = {
-  FILE: 'askpdf-file',
-  DOCUMENTS: 'askpdf-docs',
-  MESSAGES: 'askpdf-msg',
-  RELATED_PAGES: 'askpdf-related-pages',
-  DOC_TITLE: 'askpdf-doc-title',
-}

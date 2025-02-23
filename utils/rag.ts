@@ -1,22 +1,6 @@
 import { CharacterTextSplitter } from 'langchain/text_splitter'
 import type { Document } from '@langchain/core/documents'
-import { MemoryVectorStore } from 'langchain/vectorstores/memory'
-import { OpenAIEmbeddings } from '@langchain/openai'
-
-type OpenAIEmbeddingsConfig = {
-  openAIApiKey: string
-  modelName: string
-}
-
-export function createMemoryVectorStore(config: OpenAIEmbeddingsConfig) {
-  const { openAIApiKey = '', modelName = 'gpt-4o' } = config
-  return new MemoryVectorStore(
-    new OpenAIEmbeddings({
-      openAIApiKey,
-      modelName,
-    }),
-  )
-}
+import type { MemoryVectorStore } from 'langchain/vectorstores/memory'
 
 const splitter = new CharacterTextSplitter({
   chunkSize: 600,
@@ -43,4 +27,17 @@ export async function createDocuments(data: PageContent[]) {
     [],
   )
   return documents
+}
+
+export function processSimilarityDocs(docs: Awaited<ReturnType<MemoryVectorStore['similaritySearch']>>) {
+  const sortedDocumentPages = docs
+    .sort((a, b) => a.metadata.page - b.metadata.page)
+    .map(p => p.metadata.page)
+  const relatedPages = [...new Set(sortedDocumentPages)]
+  const systemPrompt = docs.map(s => s.pageContent).join('')
+
+  return {
+    relatedPages,
+    systemPrompt,
+  }
 }

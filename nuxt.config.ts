@@ -8,6 +8,15 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/eslint',
     '@nuxtjs/color-mode',
+    [
+      '@pinia/nuxt',
+      {
+        autoImports: [
+          'defineStore',
+          ['defineStore', 'definePiniaStore'],
+        ],
+      },
+    ],
   ],
   ssr: true,
   devtools: { enabled: process.env.NODE_ENV === 'development' },
@@ -40,5 +49,8 @@ export default defineNuxtConfig({
   i18n: {
     locales: ['en-US', 'zh'],
     vueI18n: './i18n.config.ts', // if you are using custom path, default
+  },
+  pinia: {
+    storesDirs: ['./stores/**'],
   },
 })

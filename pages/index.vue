@@ -10,7 +10,7 @@ const vectorManager = useVectorManager()
 
 const { isFileModalOpen, isSettingModalOpen } = useAppModal()
 const { isPending: isFileUploading, upload } = usePdfUploader()
-const { file: idbFile, documents: idbDocuments, messages: idbMessages, relatedPages } = useIDBKeyvalStore()
+const { file: idbFile, documents: idbDocuments, messages: idbMessages, relatedPages, summaryTitle } = useIDBKeyvalStore()
 
 const {
   messages,
@@ -61,6 +61,7 @@ function removePDF() {
   idbDocuments.value = []
   setMessages([])
   idbMessages.value = []
+  summaryTitle.value = ''
 }
 const isModelProcessing = computed(() => isSimilaritySearchPending.value || isChatLoading.value)
 const pageLinkElement = ref<HTMLElement>()
@@ -140,7 +141,7 @@ onBeforeUnmount(() => {
 const viewerRef = ref()
 
 async function clearData() {
-  await removePDF()
+  removePDF()
   toast.add({
     title: 'Success',
     description: t('clear-data-success'),

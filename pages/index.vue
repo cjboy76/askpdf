@@ -158,7 +158,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
   <div class="flex flex-col">
     <AppHeader />
     <div class="grid grid-cols-6 gap-2 pb-2 px-2">
-      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col flex-grow relative rounded">
+      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] hidden md:flex flex-col flex-grow relative rounded">
         <client-only
           fallback-tag="span"
           fallback=""
@@ -181,7 +181,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
           </div>
         </client-only>
       </div>
-      <div class="overflow-hidden col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
+      <div class="overflow-hidden col-span-6 md:col-span-3 h-[calc(100vh-64px)] flex flex-col rounded">
         <div class="overflow-y-auto flex flex-col flex-grow scroller">
           <MessagesList :messages="messages" />
           <div

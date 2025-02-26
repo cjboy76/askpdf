@@ -43,14 +43,14 @@ async function identifyDocumentThemes() {
       </div>
       <p
         v-if="summaryTitle"
-        class="mx-1 text-stone-600 dark:text-stone-300"
+        class="mx-1 text-stone-600 dark:text-stone-300 hidden md:block"
       >
         /
       </p>
       <Transition name="pop-up">
         <p
           v-if="summaryTitle"
-          class="text-stone-600 dark:text-stone-300"
+          class="text-stone-600 dark:text-stone-300 hidden md:block"
         >
           {{ summaryTitle }}
         </p>
@@ -63,10 +63,11 @@ async function identifyDocumentThemes() {
         variant="ghost"
         to="https://github.com/cjboy76/askpdf"
         target="_blank"
+        class="hidden md:block"
       />
       <ClientOnly>
         <UButton
-          class="mx-1"
+          class="mx-1 hidden md:block"
           :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
           color="gray"
           variant="ghost"
@@ -93,7 +94,7 @@ async function identifyDocumentThemes() {
       >
         {{ t('settings') }}
       </UButton>
-      <LangSelector class="mx-1" />
+      <LangSelector class="mx-1 hidden md:block" />
     </div>
   </header>
 </template>

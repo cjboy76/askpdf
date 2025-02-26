@@ -212,7 +212,7 @@ const onDeleteConversation: InstanceType<typeof SettingsModal>['onDeleteConversa
             <UButton
               :loading="isModelProcessing"
               class="ml-2"
-              :disabled="isFileUploading"
+              :disabled="isFileUploading || isModelProcessing || !pdfSrc"
               type="submit"
             >
               Enter
